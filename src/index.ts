@@ -1,6 +1,8 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import useroutes from './routes/users.routes'
 import databaService from './services/database.services'
+import { defaultErrorHandler } from './middlewares/errors.middleware'
+databaService.connect()
 const PORT = 3000
 const app = express()
 app.use(express.json())
@@ -10,7 +12,9 @@ app.use(express.json())
 // const router = express.Router()
 
 app.use('/users', useroutes) // này là mount router vào app, tất cả các route trong router sẽ có prefix là /api
-databaService.connect()
+
+app.use(defaultErrorHandler)
+
 app.listen(PORT, () => {
   console.log(`listening on port ${PORT}`)
 })

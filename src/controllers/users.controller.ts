@@ -1,29 +1,33 @@
 import { Request, Response } from 'express'
-import { ParamsDictionary } from 'express-serve-static-core'
+import { NextFunction, ParamsDictionary } from 'express-serve-static-core'
+import { ObjectId } from 'mongodb'
 import { RegisterRequestBody } from '~/models/requests/User.request'
 import User from '~/models/schemas/User.schemas'
-import databaseService from '~/services/database.services'
+// import databaseService from '~/services/database.services'
 import usersServices from '~/services/users.services'
 
-export const loginController = (req: Request, res: Response) => {
-  console.log(req.body)
+export const loginController = async (req: Request, res: Response) => {
+  // throw new Error('looix')
+  const user = req.user as User
+  console.log(user)
+  const user__id = user._id as ObjectId
+  const result = await usersServices.loginUser(user__id.toString())
   res.json({
-    message: 'Login successful'
+    message1: 'login success',
+    result
   })
 }
 
-export const registerController = async (req: Request<ParamsDictionary, any, RegisterRequestBody>, res: Response) => {
+export const registerController = async (
+  req: Request<ParamsDictionary, any, RegisterRequestBody>,
+  res: Response
+  // next: NextFunction
+) => {
   // const { email, password } = req.body
-  try {
-    const result = await usersServices.registerUser(req.body)
-    res.json({
-      message: 'Register successful',
-      result
-    })
-  } catch (error) {
-    res.status(400).json({
-      message: 'Register failed',
-      error
-    })
-  }
+  // throw new Error('lỗi')
+  const result = await usersServices.registerUser(req.body)
+  res.json({
+    message: 'Register successful',
+    result
+  })
 }
