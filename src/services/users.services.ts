@@ -39,7 +39,7 @@ class UsersServices {
 
   async registerUser(payload: RegisterRequestBody) {
     const { name } = payload
-    console.log(`name:${name}`)
+    // console.log(`name:${name}`)
     const result = await databaseService.users.insertOne(
       new User({
         ...payload,
@@ -79,6 +79,14 @@ class UsersServices {
   async CheckEmail(value: string) {
     const user = await databaseService.users.findOne({ email: value })
     return user
+  }
+
+  async logout(refresh_token: string) {
+    const result = await databaseService.refreshtokens.deleteOne({ token: refresh_token })
+    // console.log('result: ', result)
+    return {
+      message: 'logout is success'
+    }
   }
 }
 
