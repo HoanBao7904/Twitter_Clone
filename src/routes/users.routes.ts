@@ -20,6 +20,7 @@ import {
   refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
+  updateMeValidator,
   verifyForgotpasswordTokenValidator,
   verifyUserValidator
 } from '~/middlewares/users.middlewares'
@@ -142,6 +143,12 @@ useRoutes.get('/me', accessTokenValidator, wrapRequestHandler(getMeController))
  */
 //method patch khác post chỗ path là khi một form bạn thay đổi cái input nào thì gửi cái đó thôi,
 // còn post thì gửi form thì gửi hết các thông tin
-useRoutes.patch('/me', accessTokenValidator, verifyUserValidator, wrapRequestHandler(updateMeController))
+useRoutes.patch(
+  '/me',
+  accessTokenValidator,
+  verifyUserValidator,
+  updateMeValidator,
+  wrapRequestHandler(updateMeController)
+)
 
 export default useRoutes

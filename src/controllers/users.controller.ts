@@ -9,6 +9,7 @@ import {
   RegisterRequestBody,
   resetPasswordReqBody,
   Tokenpayload,
+  UpdateReqBody,
   VerifyEmailReqBody
 } from '~/models/requests/User.request'
 import User from '~/models/schemas/User.schemas'
@@ -136,9 +137,13 @@ export const getMeController = async (req: Request, res: Response) => {
   })
 }
 
-export const updateMeController = async (req: Request, res: Response) => {
+export const updateMeController = async (req: Request<ParamsDictionary, any, UpdateReqBody>, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const { body } = req
+  const user = await usersServices.updateMe(user_id, body)
   return res.json({
-    message: 'sucess'
+    message: 'update me sucess',
+    result: user
   })
 }
 

@@ -1,6 +1,6 @@
 // import { Request, Response, NextFunction } from 'express'
 import { NextFunction, Request, Response } from 'express'
-import { checkSchema } from 'express-validator'
+import { checkSchema, ParamSchema } from 'express-validator'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { capitalize } from 'lodash'
 import { ObjectId } from 'mongodb'
@@ -14,6 +14,35 @@ import usersServices from '~/services/users.services'
 import { HashPassword } from '~/utils/crypto'
 import { verifyToken } from '~/utils/jwt'
 import { validate } from '~/utils/validation'
+
+const nameSchema: ParamSchema = {
+  notEmpty: {
+    errorMessage: 'tên không được để trống'
+  },
+  isLength: {
+    options: {
+      min: 3,
+      max: 50
+    },
+    errorMessage: 'tên phải có độ dài từ 3 đến 50 ký tự'
+  },
+
+  trim: true
+}
+
+const dateOfBirthSchema: ParamSchema = {
+  notEmpty: {
+    errorMessage: 'ngày tháng năm sinh không được để trống'
+  },
+  trim: true,
+  isISO8601: {
+    errorMessage: 'ngày tháng năm không hợp lệ', // kiểm tra định dạng ngày tháng năm
+    options: {
+      strict: true,
+      strictSeparator: true
+    }
+  }
+}
 
 export const loginValidator = validate(
   checkSchema(
@@ -74,20 +103,7 @@ export const loginValidator = validate(
 export const registerValidator = validate(
   checkSchema(
     {
-      name: {
-        notEmpty: {
-          errorMessage: 'tên không được để trống'
-        },
-        isLength: {
-          options: {
-            min: 3,
-            max: 50
-          },
-          errorMessage: 'tên phải có độ dài từ 3 đến 50 ký tự'
-        },
-
-        trim: true
-      },
+      name: nameSchema,
       email: {
         notEmpty: {
           errorMessage: 'email không được để trống'
@@ -165,19 +181,7 @@ export const registerValidator = validate(
         trim: true,
         isString: true // nghĩa là phải là chuỗi
       },
-      date_Of_Birth: {
-        notEmpty: {
-          errorMessage: 'ngày tháng năm sinh không được để trống'
-        },
-        trim: true,
-        isISO8601: {
-          errorMessage: 'ngày tháng năm không hợp lệ', // kiểm tra định dạng ngày tháng năm
-          options: {
-            strict: true,
-            strictSeparator: true
-          }
-        }
-      }
+      date_Of_Birth: dateOfBirthSchema
     },
     ['body']
   )
@@ -505,3 +509,105 @@ export const verifyUserValidator = (req: Request, res: Response, next: NextFunct
   }
   next()
 }
+
+export const updateMeValidator = validate(
+  checkSchema(
+    {
+      name: {
+        ...nameSchema,
+        optional: true,
+        notEmpty: undefined
+      },
+      date_Of_Birth: {
+        ...dateOfBirthSchema,
+        notEmpty: undefined,
+        optional: true
+      },
+      bio: {
+        optional: true,
+        isString: {
+          errorMessage: 'kieu string'
+        },
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 200
+          },
+          errorMessage: 'bio length:  min 1 and max 200 '
+        }
+      },
+      location: {
+        optional: true,
+        isString: {
+          errorMessage: 'kieu string'
+        },
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 200
+          },
+          errorMessage: 'location length: min 1 and max 200 '
+        }
+      },
+      website: {
+        optional: true,
+        isString: {
+          errorMessage: 'kieu string'
+        },
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 200
+          },
+          errorMessage: 'website length: min 1 and max 200 '
+        }
+      },
+      username: {
+        optional: true,
+        isString: {
+          errorMessage: ' username kieu string'
+        },
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 50
+          },
+          errorMessage: 'username length: min 1 and max 50 '
+        }
+      },
+      avatar: {
+        optional: true,
+        isString: {
+          errorMessage: ' avatar kieu string'
+        },
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 400
+          },
+          errorMessage: 'avatar length: min 1 and max 200 '
+        }
+      },
+      cover_photo: {
+        optional: true,
+        isString: {
+          errorMessage: ' cover photo kieu string'
+        },
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 400
+          },
+          errorMessage: 'cover photo length: min 1 and max 400 '
+        }
+      }
+    },
+    ['body']
+  )
+)

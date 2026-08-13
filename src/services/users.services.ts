@@ -1,6 +1,6 @@
 import User from '~/models/schemas/User.schemas'
 import databaseService from './database.services'
-import { RegisterRequestBody } from '~/models/requests/User.request'
+import { RegisterRequestBody, UpdateReqBody } from '~/models/requests/User.request'
 import { HashPassword } from '~/utils/crypto'
 import { SignToken } from '~/utils/jwt'
 import { TokenTypes, UserVerifyStatus } from '~/constants/enums'
@@ -232,6 +232,30 @@ class UsersServices {
           forgot_password_token: 0,
           email_verify_token: 0,
           password: 0
+        }
+      }
+    )
+    return user
+  }
+  async updateMe(user_id: string, payload: UpdateReqBody) {
+    const _payload = payload.date_of_birth ? { ...payload, date_of_birth: new Date(payload.date_of_birth) } : payload
+    // có hai lựa chọn 1 update 2 findoneandUpdate(thz này vừa update vừa trả về document mới cho user)
+    const user = await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          ...(_payload as UpdateReqBody & { date_of_birth?: Date })
+        },
+        $currentDate: {
+          updated_at: true
+        }
+      },
+      {
+        returnDocument: 'after',
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
         }
       }
     )
