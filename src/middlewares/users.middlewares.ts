@@ -1,11 +1,13 @@
 // import { Request, Response, NextFunction } from 'express'
-import { Request } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { checkSchema } from 'express-validator'
 import { JsonWebTokenError } from 'jsonwebtoken'
 import { capitalize } from 'lodash'
 import { ObjectId } from 'mongodb'
+import { UserVerifyStatus } from '~/constants/enums'
 import { httpStatus } from '~/constants/httpStatus'
 import { ErrorWithStatus } from '~/models/Errors'
+import { Tokenpayload } from '~/models/requests/User.request'
 // import { ErrorWithStatus } from '~/models/Errors'
 import databaseService from '~/services/database.services'
 import usersServices from '~/services/users.services'
@@ -487,3 +489,19 @@ export const resetPasswordValidator = validate(
     ['body']
   )
 )
+
+export const verifyUserValidator = (req: Request, res: Response, next: NextFunction) => {
+  const { verify } = req.decoded_authorization as Tokenpayload
+  //đây có hai cánh để cho cái eror tự đôgnj chuyển qua  error defaul
+  //vì đây là middleware đồng bộ thì có thể throw
+  //trường hợp bất động bộ nên dùng cái next thay cho throw nhớ bất đồng bộ có "async fn"
+  if (verify !== UserVerifyStatus.Verified) {
+    return next(
+      new ErrorWithStatus({
+        message: 'user not verified',
+        status: 403
+      })
+    )
+  }
+  next()
+}

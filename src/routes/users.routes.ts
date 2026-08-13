@@ -9,7 +9,8 @@ import {
   forgotPasswordController,
   verifyForgotPasswordTokenController,
   resetPasswordController,
-  getMeController
+  getMeController,
+  updateMeController
 } from '~/controllers/users.controller'
 import {
   accessTokenValidator,
@@ -19,7 +20,8 @@ import {
   refreshTokenValidator,
   registerValidator,
   resetPasswordValidator,
-  verifyForgotpasswordTokenValidator
+  verifyForgotpasswordTokenValidator,
+  verifyUserValidator
 } from '~/middlewares/users.middlewares'
 import { wrapRequestHandler } from '~/utils/handlers'
 
@@ -130,5 +132,16 @@ useRoutes.post('/reset-password', resetPasswordValidator, wrapRequestHandler(res
  */
 
 useRoutes.get('/me', accessTokenValidator, wrapRequestHandler(getMeController))
+
+/**
+ * Description: update me profile
+ * path: /me
+ * method: PATCH
+ * header:{Authorization: Bearer <access_token>}
+ * body: {userschema}
+ */
+//method patch khác post chỗ path là khi một form bạn thay đổi cái input nào thì gửi cái đó thôi,
+// còn post thì gửi form thì gửi hết các thông tin
+useRoutes.patch('/me', accessTokenValidator, verifyUserValidator, wrapRequestHandler(updateMeController))
 
 export default useRoutes
