@@ -311,6 +311,28 @@ class UsersServices {
       message: 'Da Follower'
     }
   }
+
+  async unFollower(user_id: string, follower_user_id: string) {
+    const follower = await databaseService.follower.findOne({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(follower_user_id)
+    })
+
+    //nghĩa là nó chưa follwer user này
+    if (follower === null) {
+      return {
+        message: 'đã un-follwer'
+      }
+    }
+    await databaseService.follower.deleteOne({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(follower_user_id)
+    })
+
+    return {
+      message: 'un-follower success'
+    }
+  }
 }
 
 const usersServices = new UsersServices()

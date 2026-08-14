@@ -44,6 +44,30 @@ const dateOfBirthSchema: ParamSchema = {
   }
 }
 
+const userIdSchema: ParamSchema = {
+  custom: {
+    options: async (value: string, { req }) => {
+      if (!ObjectId.isValid(value)) {
+        throw new ErrorWithStatus({
+          message: 'invalid  user id',
+          status: httpStatus.NOT_FOUND
+        })
+      }
+
+      const followed_userid = await databaseService.users.findOne({
+        _id: new ObjectId(value)
+      })
+
+      if (followed_userid === null) {
+        throw new ErrorWithStatus({
+          message: 'user not found',
+          status: httpStatus.NOT_FOUND
+        })
+      }
+    }
+  }
+}
+
 export const loginValidator = validate(
   checkSchema(
     {
@@ -615,30 +639,17 @@ export const updateMeValidator = validate(
 export const followValidator = validate(
   checkSchema(
     {
-      followed_user_id: {
-        custom: {
-          options: async (value: string, { req }) => {
-            if (!ObjectId.isValid(value)) {
-              throw new ErrorWithStatus({
-                message: 'invalid followed user id',
-                status: httpStatus.NOT_FOUND
-              })
-            }
-
-            const followed_userid = await databaseService.users.findOne({
-              _id: new ObjectId(value)
-            })
-
-            if (followed_userid === null) {
-              throw new ErrorWithStatus({
-                message: 'user not found',
-                status: httpStatus.NOT_FOUND
-              })
-            }
-          }
-        }
-      }
+      followed_user_id: userIdSchema
     },
     ['body']
+  )
+)
+
+export const unFollowValidator = validate(
+  checkSchema(
+    {
+      user_id: userIdSchema
+    },
+    ['params']
   )
 )

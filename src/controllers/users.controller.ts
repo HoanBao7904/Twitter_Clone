@@ -12,6 +12,7 @@ import {
   RegisterRequestBody,
   resetPasswordReqBody,
   Tokenpayload,
+  UnFollowReqParams,
   UpdateReqBody,
   VerifyEmailReqBody
 } from '~/models/requests/User.request'
@@ -176,5 +177,13 @@ export const FollowController = async (req: Request<ParamsDictionary, any, Follo
   const { followed_user_id } = req.body
   // console.log('body : ', body)
   const result = await usersServices.follower(user_id, followed_user_id)
+  return res.json(result)
+}
+
+export const unFollowController = async (req: Request<UnFollowReqParams>, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const { user_id: followed_user_id } = req.params
+  // console.log('body : ', body)
+  const result = await usersServices.unFollower(user_id, followed_user_id)
   return res.json(result)
 }
