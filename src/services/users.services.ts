@@ -7,6 +7,10 @@ import { TokenTypes, UserVerifyStatus } from '~/constants/enums'
 import RefreshToken from '~/models/schemas/RefreshToken.schemas'
 import { ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
+import { ErrorWithStatus } from '~/models/Errors'
+import { httpStatus } from '~/constants/httpStatus'
+import Follower from '~/models/schemas/follower.schema'
+import { floor } from 'lodash'
 dotenv.config()
 class UsersServices {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
@@ -80,6 +84,7 @@ class UsersServices {
         ...payload,
         _id: user_id,
         email_verify_token,
+        username: `user${user_id.toString()}`, //default
         date_of_birth: new Date(payload.date_Of_Birth),
         password: HashPassword(payload.password)
       })
@@ -260,6 +265,51 @@ class UsersServices {
       }
     )
     return user
+  }
+  async getProfile(username: string) {
+    const user = await databaseService.users.findOne(
+      { username: username },
+      {
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0,
+          verify: 0,
+          created_at: 0,
+          updated_at: 0
+        }
+      }
+    )
+    if (user === null) {
+      throw new ErrorWithStatus({
+        message: 'user not found',
+        status: httpStatus.NOT_FOUND
+      })
+    }
+    return user
+  }
+
+  async follower(user_id: string, follower_user_id: string) {
+    const follower = await databaseService.follower.findOne({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(follower_user_id)
+    })
+
+    if (follower === null) {
+      await databaseService.follower.insertOne(
+        new Follower({
+          followed_user_id: new ObjectId(follower_user_id),
+          user_id: new ObjectId(user_id)
+        })
+      )
+
+      return {
+        message: 'follow success'
+      }
+    }
+    return {
+      message: 'Da Follower'
+    }
   }
 }
 

@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express'
 import useroutes from './routes/users.routes'
 import databaService from './services/database.services'
 import { defaultErrorHandler } from './middlewares/errors.middleware'
+import { pick } from 'lodash'
 databaService.connect()
 const PORT = 3000
 const app = express()
@@ -18,6 +19,8 @@ app.use(defaultErrorHandler)
 app.listen(PORT, () => {
   console.log(`listening on port ${PORT}`)
 })
+
+// console.log(pick({ a: '1', b: 3 }, ['c']))
 
 //hoanbao79
 //2FvCL34jtuN9Amku

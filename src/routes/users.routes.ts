@@ -10,11 +10,15 @@ import {
   verifyForgotPasswordTokenController,
   resetPasswordController,
   getMeController,
-  updateMeController
+  updateMeController,
+  getProfileController,
+  FollowController
 } from '~/controllers/users.controller'
+import { filterMiddleware } from '~/middlewares/common.middleware'
 import {
   accessTokenValidator,
   emailVerifyTokenValidator,
+  followValidator,
   forgotPasswordValidator,
   loginValidator,
   refreshTokenValidator,
@@ -24,6 +28,7 @@ import {
   verifyForgotpasswordTokenValidator,
   verifyUserValidator
 } from '~/middlewares/users.middlewares'
+import { UpdateReqBody } from '~/models/requests/User.request'
 import { wrapRequestHandler } from '~/utils/handlers'
 
 // const router = express.Router()
@@ -148,7 +153,41 @@ useRoutes.patch(
   accessTokenValidator,
   verifyUserValidator,
   updateMeValidator,
+  filterMiddleware<UpdateReqBody>([
+    'avatar',
+    'bio',
+    'cover_photo',
+    'date_of_birth',
+    'location',
+    'name',
+    'username',
+    'website'
+  ]),
   wrapRequestHandler(updateMeController)
+)
+
+/**
+ * Description: get user profile
+ * path: /:username (:username thi key la username, neu :hahaha thi key la hahaha)
+ * method: GET
+ */
+
+useRoutes.get('/:username', wrapRequestHandler(getProfileController))
+
+/**
+ * Description: follow user
+ * path: /follow
+ * method: POST
+ * header:{Authorization: Bearer <access_token>}
+ * body: {user_id: strig}
+ */
+
+useRoutes.post(
+  '/follow',
+  accessTokenValidator,
+  verifyUserValidator,
+  followValidator,
+  wrapRequestHandler(FollowController)
 )
 
 export default useRoutes

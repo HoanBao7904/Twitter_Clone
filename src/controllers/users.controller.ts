@@ -1,10 +1,13 @@
 import { Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
+import { pick } from 'lodash'
 import { ObjectId } from 'mongodb'
 import { UserVerifyStatus } from '~/constants/enums'
 import { httpStatus } from '~/constants/httpStatus'
 import {
+  FollowReqBody,
   forgotPasswordReqBody,
+  getProfileReqParams,
   LogoutRequestBody,
   RegisterRequestBody,
   resetPasswordReqBody,
@@ -137,9 +140,30 @@ export const getMeController = async (req: Request, res: Response) => {
   })
 }
 
+export const getProfileController = async (req: Request<getProfileReqParams>, res: Response) => {
+  const { username } = req.params
+  console.log('req.params:', username)
+  const result = await usersServices.getProfile(username)
+  return res.json({
+    message: 'get profile success',
+    result: result
+  })
+}
+
 export const updateMeController = async (req: Request<ParamsDictionary, any, UpdateReqBody>, res: Response) => {
   const { user_id } = req.decoded_authorization as Tokenpayload
+  // const body = pick(req.body, [
+  //   'name',
+  //   'date_of_birth',
+  //   'bio',
+  //   'location',
+  //   'website',
+  //   'username',
+  //   'avatar',
+  //   'cover_photo'
+  // ]) //pick nay nhan nhung key minh muon lay, bo key khac khong lay
   const { body } = req
+  // console.log('body : ', body)
   const user = await usersServices.updateMe(user_id, body)
   return res.json({
     message: 'update me sucess',
@@ -147,34 +171,10 @@ export const updateMeController = async (req: Request<ParamsDictionary, any, Upd
   })
 }
 
-// export const emailVerifyValidator = async (req: Request, res: Response) => {
-//   // 1. Lấy user_id từ token đã verify
-//   const { user_id } = req.decoded_email_verify_token as Tokenpayload
-
-//   // 2. Tìm user trong database
-//   const user = await databaseService.users.findOne({
-//     _id: new ObjectId(user_id)
-//   })
-
-//   if (!user) {
-//     return res.status(httpStatus.NOT_FOUND).json({
-//       message: 'User not found'
-//     })
-//   }
-
-//   // 3. Kiểm tra đã verify chưa
-//   if (user.email_verify_token === '') {
-//     return res.status(httpStatus.OK).json({
-//       message: 'Email already verified'
-//     })
-//   }
-
-//   // 4. Verify email
-//   const result = await usersServices.verifyEmail(user_id)
-
-//   // 5. ✅ Trả về response bằng res.json()
-//   return res.status(httpStatus.OK).json({
-//     message: 'Email verified successfully',
-//     result
-//   })
-// }
+export const FollowController = async (req: Request<ParamsDictionary, any, FollowReqBody>, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const { followed_user_id } = req.body
+  // console.log('body : ', body)
+  const result = await usersServices.follower(user_id, followed_user_id)
+  return res.json(result)
+}
