@@ -6,7 +6,9 @@ import { capitalize } from 'lodash'
 import { ObjectId } from 'mongodb'
 import { UserVerifyStatus } from '~/constants/enums'
 import { httpStatus } from '~/constants/httpStatus'
+import { REGEX_USERNAME } from '~/constants/regex'
 import { ErrorWithStatus } from '~/models/Errors'
+
 import { Tokenpayload } from '~/models/requests/User.request'
 // import { ErrorWithStatus } from '~/models/Errors'
 import databaseService from '~/services/database.services'
@@ -66,6 +68,66 @@ const userIdSchema: ParamSchema = {
       }
     }
   }
+}
+
+const passwordSchema: ParamSchema = {
+  notEmpty: {
+    errorMessage: 'mật khẩu không được để trống'
+  },
+  isLength: {
+    options: {
+      min: 6,
+      max: 50
+    },
+    errorMessage: 'mật khẩu phải có độ dài từ 6 đến 50 ký tự'
+  },
+  isStrongPassword: {
+    options: {
+      minLength: 6,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    },
+    errorMessage:
+      'Mật khẩu phải có độ dài ít nhất 6 ký tự và bao gồm ít nhất một chữ cái thường, một chữ cái in hoa, một chữ số và một ký tự đặc biệt.'
+  },
+  trim: true,
+  isString: true // nghĩa là phải là chuỗi
+}
+
+const confirmPasswordSchema: ParamSchema = {
+  notEmpty: {
+    errorMessage: 'xác nhận mật khẩu không được để trống'
+  },
+  isLength: {
+    options: {
+      min: 6,
+      max: 50
+    },
+    errorMessage: 'xác nhận mật khẩu phải có độ dài từ 6 đến 50 ký tự'
+  },
+  isStrongPassword: {
+    options: {
+      minLength: 6,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    },
+    errorMessage:
+      'Mật khẩu phải có độ dài ít nhất 6 ký tự và bao gồm ít nhất một chữ cái thường, một chữ cái in hoa, một chữ số và một ký tự đặc biệt.'
+  },
+  custom: {
+    options: (value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Mật khẩu xác nhận không khớp với mật khẩu.')
+      }
+      return true
+    }
+  },
+  trim: true,
+  isString: true // nghĩa là phải là chuỗi
 }
 
 export const loginValidator = validate(
@@ -147,64 +209,8 @@ export const registerValidator = validate(
           }
         }
       },
-      password: {
-        notEmpty: {
-          errorMessage: 'mật khẩu không được để trống'
-        },
-        isLength: {
-          options: {
-            min: 6,
-            max: 50
-          },
-          errorMessage: 'mật khẩu phải có độ dài từ 6 đến 50 ký tự'
-        },
-        isStrongPassword: {
-          options: {
-            minLength: 6,
-            minLowercase: 1,
-            minUppercase: 1,
-            minNumbers: 1,
-            minSymbols: 1
-          },
-          errorMessage:
-            'Mật khẩu phải có độ dài ít nhất 6 ký tự và bao gồm ít nhất một chữ cái thường, một chữ cái in hoa, một chữ số và một ký tự đặc biệt.'
-        },
-        trim: true,
-        isString: true // nghĩa là phải là chuỗi
-      },
-      confirm_Password: {
-        notEmpty: {
-          errorMessage: 'xác nhận mật khẩu không được để trống'
-        },
-        isLength: {
-          options: {
-            min: 6,
-            max: 50
-          },
-          errorMessage: 'xác nhận mật khẩu phải có độ dài từ 6 đến 50 ký tự'
-        },
-        isStrongPassword: {
-          options: {
-            minLength: 6,
-            minLowercase: 1,
-            minUppercase: 1,
-            minNumbers: 1,
-            minSymbols: 1
-          },
-          errorMessage:
-            'Mật khẩu phải có độ dài ít nhất 6 ký tự và bao gồm ít nhất một chữ cái thường, một chữ cái in hoa, một chữ số và một ký tự đặc biệt.'
-        },
-        custom: {
-          options: (value, { req }) => {
-            if (value !== req.body.password) {
-              throw new Error('Mật khẩu xác nhận không khớp với mật khẩu.')
-            }
-            return true
-          }
-        },
-        trim: true,
-        isString: true // nghĩa là phải là chuỗi
-      },
+      password: passwordSchema,
+      confirm_Password: confirmPasswordSchema,
       date_Of_Birth: dateOfBirthSchema
     },
     ['body']
@@ -595,12 +601,16 @@ export const updateMeValidator = validate(
           errorMessage: ' username kieu string'
         },
         trim: true,
-        isLength: {
-          options: {
-            min: 1,
-            max: 50
-          },
-          errorMessage: 'username length: min 1 and max 50 '
+        custom: {
+          options: async (value, { req }) => {
+            if (!REGEX_USERNAME.test(value)) {
+              throw Error('invalid username')
+            }
+            const user = await databaseService.users.findOne({ username: value })
+            if (user) {
+              throw new Error('user name da ton tai')
+            }
+          }
         }
       },
       avatar: {
@@ -651,5 +661,36 @@ export const unFollowValidator = validate(
       user_id: userIdSchema
     },
     ['params']
+  )
+)
+export const changePasswordvalidator = validate(
+  checkSchema(
+    {
+      old_password: {
+        ...passwordSchema,
+        custom: {
+          options: async (value: string, { req }) => {
+            const decoded = (req as Request).decoded_authorization as Tokenpayload
+            const user_id = decoded.user_id
+            console.log('user_id', user_id)
+            const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
+            if (!user) {
+              throw new ErrorWithStatus({ message: 'User not found', status: httpStatus.NOT_FOUND })
+            }
+            const password = user.password
+            const oldPassWod = HashPassword(value)
+            if (oldPassWod !== password) {
+              throw new ErrorWithStatus({
+                message: 'password khong dung',
+                status: httpStatus.UNAUTHORIZED
+              })
+            }
+          }
+        }
+      },
+      password: passwordSchema,
+      confirm_password: confirmPasswordSchema
+    },
+    ['body']
   )
 )

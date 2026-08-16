@@ -10,7 +10,8 @@ import dotenv from 'dotenv'
 import { ErrorWithStatus } from '~/models/Errors'
 import { httpStatus } from '~/constants/httpStatus'
 import Follower from '~/models/schemas/follower.schema'
-import { floor } from 'lodash'
+import axios from 'axios'
+import { header } from 'express-validator'
 dotenv.config()
 class UsersServices {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
@@ -122,6 +123,96 @@ class UsersServices {
     }
   }
 
+  private async getOauthGoogleToken(code: string) {
+    const body = {
+      code: code,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      grant_type: 'authorization_code'
+    }
+    const { data } = await axios.post('https://oauth2.googleapis.com/token', body, {
+      headers: {
+        'Content-Type': 'application/x-www-from-urlencoded'
+      }
+    }) //defaut google requirement
+    return data as {
+      access_token: string
+      id_token: string
+    }
+  }
+
+  private async getGoogleUserInfo(access_token: string, token_id: string) {
+    const { data } = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
+      params: { access_token: access_token, alt: 'json' },
+      headers: {
+        Authorization: `Bearer ${token_id}`
+      }
+    })
+    return data as {
+      id: string
+      email: string
+      verified_email: boolean
+      name: string
+      given_name: string
+      family_name: string
+      picture: string
+      locale: string
+    }
+  }
+
+  async oauth(code: string) {
+    const data = await this.getOauthGoogleToken(code)
+    const userinfo = await this.getGoogleUserInfo(data.access_token, data.id_token)
+    if (!userinfo.verified_email) {
+      throw new ErrorWithStatus({
+        message: 'chua verify gmail',
+        status: 400
+      })
+    }
+    //kiem tra email duoc dki chua
+    const user = await databaseService.users.findOne({ email: userinfo.email })
+    if (user) {
+      const [access_token, refresh_token] = await this.SignAccessAndRefreshToken({
+        user_id: user._id.toString(),
+        verify: user.verify
+      })
+
+      await databaseService.refreshtokens.insertOne(
+        new RefreshToken({ token: refresh_token, user_id: new ObjectId(user._id.toString()) })
+      )
+
+      return {
+        access_token,
+        refresh_token,
+        newUser: false,
+        verify: UserVerifyStatus.Verified
+      }
+    } else {
+      const password = Math.random().toString(36).substring(2, 7)
+      //khong co tao moi
+      const data = await this.registerUser({
+        name: userinfo.name,
+        email: userinfo.email,
+        date_Of_Birth: new Date().toISOString(),
+        password: password,
+        confirm_Password: password
+      })
+      return { ...data, newUser: true, verify: UserVerifyStatus.Unverified }
+    }
+    // console.log(userinfo)
+    /**
+     * {
+     *   access_token:,
+     *   expires_in:,
+     *   refresh_token
+     *   scope:,
+     *   token_type:,
+     *   id_token:,
+     * }
+     */
+  }
+
   async CheckEmail(value: string) {
     const user = await databaseService.users.findOne({ email: value })
     return user
@@ -162,6 +253,9 @@ class UsersServices {
       )
     ])
     const [access_token, refresh_token] = token
+    await databaseService.refreshtokens.insertOne(
+      new RefreshToken({ user_id: new ObjectId(user_id), token: refresh_token })
+    )
     return {
       access_token,
       refresh_token
@@ -331,6 +425,21 @@ class UsersServices {
 
     return {
       message: 'un-follower success'
+    }
+  }
+  async ChangePassword(user_id: string, password: string) {
+    const changePass = await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          password: HashPassword(password)
+        }
+      }
+    )
+
+    return {
+      message: 'changePassword is success'
+      // changePass
     }
   }
 }

@@ -1,10 +1,13 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
+import { access } from 'fs'
+import { url } from 'inspector'
 import { pick } from 'lodash'
 import { ObjectId } from 'mongodb'
 import { UserVerifyStatus } from '~/constants/enums'
 import { httpStatus } from '~/constants/httpStatus'
 import {
+  changePasswordReqBody,
   FollowReqBody,
   forgotPasswordReqBody,
   getProfileReqParams,
@@ -28,9 +31,25 @@ export const loginController = async (req: Request<ParamsDictionary, any, Logout
   const user__id = user._id as ObjectId
   const result = await usersServices.loginUser({ user_id: user__id.toString(), verify: user.verify })
   res.json({
-    message1: 'login success',
+    message: 'login success',
     result
   })
+}
+
+export const oauthController = async (req: Request, res: Response, next: NextFunction) => {
+  // console.log(req.url)
+  const { code } = req.query
+  const result = await usersServices.oauth(code as string)
+  console.log(code)
+  const urlRedirect = `${process.env.CLIENT_REDIRECT_CALLBACK}?access_token=${result.access_token}&refresh_token=${result.refresh_token}&new_user=${result.newUser}&verify=${result.verify}`
+  return res.redirect(urlRedirect)
+  // res.json({
+  //   message: result.newUser ? 'Register success' : 'login success',
+  //   result: {
+  //     access_token: result.access_token,
+  //     refreshtoken: result.refresh_token
+  //   }
+  // })
 }
 
 export const registerController = async (
@@ -186,4 +205,14 @@ export const unFollowController = async (req: Request<UnFollowReqParams>, res: R
   // console.log('body : ', body)
   const result = await usersServices.unFollower(user_id, followed_user_id)
   return res.json(result)
+}
+
+export const changePasswordController = async (
+  req: Request<ParamsDictionary, any, changePasswordReqBody>,
+  res: Response
+) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const { password } = req.body
+  const result = await usersServices.ChangePassword(user_id, password)
+  res.json(result)
 }

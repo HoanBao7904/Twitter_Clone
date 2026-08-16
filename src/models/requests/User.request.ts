@@ -58,3 +58,9 @@ export interface UnFollowReqParams extends ParamsDictionary {
 export interface getProfileReqParams extends ParamsDictionary {
   username: string
 }
+
+export interface changePasswordReqBody {
+  old_password: string
+  password: string
+  confirm_password: string
+}
