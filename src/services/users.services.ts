@@ -11,7 +11,6 @@ import { ErrorWithStatus } from '~/models/Errors'
 import { httpStatus } from '~/constants/httpStatus'
 import Follower from '~/models/schemas/follower.schema'
 import axios from 'axios'
-import { header } from 'express-validator'
 dotenv.config()
 class UsersServices {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {

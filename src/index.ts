@@ -5,6 +5,7 @@ import { defaultErrorHandler } from './middlewares/errors.middleware'
 import mediasRouter from './routes/medias.route'
 import { initFolder } from './utils/file'
 import { config } from 'dotenv'
+import { UPLOAD_DIR } from './constants/dir'
 
 config()
 
@@ -24,6 +25,8 @@ initFolder()
 app.use('/users', useroutes) // này là mount router vào app, tất cả các route trong router sẽ có prefix là /api
 
 app.use('/medias', mediasRouter)
+app.use('/uploads', express.static(UPLOAD_DIR))
+
 app.use(defaultErrorHandler)
 
 app.listen(PORT, () => {
