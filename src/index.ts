@@ -5,7 +5,9 @@ import { defaultErrorHandler } from './middlewares/errors.middleware'
 import mediasRouter from './routes/medias.route'
 import { initFolder } from './utils/file'
 import { config } from 'dotenv'
-import { UPLOAD_DIR } from './constants/dir'
+import { UPLOAD_IMAGE_DIR, UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_DIR } from './constants/dir'
+import staticRouter from './routes/statics.route'
+import path from 'path'
 
 config()
 
@@ -25,14 +27,17 @@ initFolder()
 app.use('/users', useroutes) // này là mount router vào app, tất cả các route trong router sẽ có prefix là /api
 
 app.use('/medias', mediasRouter)
-app.use('/uploads', express.static(UPLOAD_DIR))
+// console.log(UPLOAD_IMAGE_DIR)
+app.use('/static/uploads/video', express.static(UPLOAD_VIDEO_DIR))
+app.use('/static', staticRouter)
 
 app.use(defaultErrorHandler)
 
 app.listen(PORT, () => {
+  // nghiax la khi
   console.log(`listening on port ${PORT}`)
 })
-
+//
 // console.log(pick({ a: '1', b: 3 }, ['c']))
 
 //hoanbao79

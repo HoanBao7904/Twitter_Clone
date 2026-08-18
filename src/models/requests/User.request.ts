@@ -1,6 +1,7 @@
 import { JwtPayload } from 'jsonwebtoken'
 import { TokenTypes } from '~/constants/enums'
 import { ParamsDictionary } from 'express-serve-static-core'
+
 export interface LoginRequestBody {
   email: string
   password: string
@@ -63,4 +64,14 @@ export interface changePasswordReqBody {
   old_password: string
   password: string
   confirm_password: string
+}
+
+export interface SendFileError {
+  errno: number
+  code: string
+  syscall: string
+  path: string
+  expose: boolean
+  statusCode: number
+  status: number
 }

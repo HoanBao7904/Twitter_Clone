@@ -103,7 +103,7 @@ class UsersServices {
     await databaseService.refreshtokens.insertOne(
       new RefreshToken({ token: refresh_token, user_id: new ObjectId(user_id.toString()) })
     )
-    console.log('email_verify_token', email_verify_token)
+
     return {
       acess_token,
       refresh_token,
