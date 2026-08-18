@@ -268,7 +268,7 @@ export const refreshTokenValidator = validate(
           try {
             if (!value) {
               throw new ErrorWithStatus({
-                message: 'Refresh Token  is required',
+                message: 'Refresh Token is required',
                 status: httpStatus.UNAUTHORIZED
               })
             }

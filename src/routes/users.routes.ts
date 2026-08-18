@@ -83,9 +83,9 @@ useRoutes.post(
 
 /**
  * Description: logouyt a user
- * path: /logout
+ * path: /refresh-token
  * method: POST
- * header :{Authorization: Bearer <access_token>}
+ * header :{Authorization: Bearer <access_token>} ko cần header vì access token đã hết hạn
  * body: { refreshtoken: string }
  */
 

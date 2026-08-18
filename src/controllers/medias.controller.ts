@@ -52,6 +52,10 @@ export const serveImageController = (req: Request, res: Response) => {
 //   })
 // }
 
+// Client tự động gửi header Range để xin từng đoạn nhỏ của video (không xin nguyên file)
+// -> Server chỉ đọc đúng đoạn đó từ ổ đĩa (fs.createReadStream start-end) và trả về 206 Partial Content
+// -> Video phát được ngay từ đoạn đầu, tua tới đâu thì xin đúng đoạn đó, không cần tải hết file
+
 export const serveVideoStreamController = (req: Request, res: Response) => {
   const range = req.headers.range
   if (!range) return res.status(400).send('requires Range header')
@@ -84,6 +88,25 @@ export const serveVideoStreamController = (req: Request, res: Response) => {
   const contentLength = end - start + 1 // cộng 1 lại
 
   const contentType = mime.getType(videoPath) || 'video/*'
+
+  /**
+   * Format của header Content-Range: bytes <start>-<end>/<videoSize>
+   * Ví dụ: Content-Range: bytes 1048576-3145727/3145728
+   * Yêu cầu là `end` phải luôn luôn nhỏ hơn `videoSize`
+   * ❌ 'Content-Range': 'bytes 0-100/100'
+   * ✅ 'Content-Range': 'bytes 0-99/100'
+   *
+   * Còn Content-Length sẽ là end - start + 1. Đại diện cho khoản cách.
+   * Để dễ hình dung, mọi người tưởng tượng từ số 0 đến số 10 thì ta có 11 số.
+   * byte cũng tương tự, nếu start = 0, end = 10 thì ta có 11 byte.
+   * Công thức là end - start + 1
+   *
+   * ChunkSize = 50
+   * videoSize = 100
+   * |0----------------50|51----------------99|100 (end)
+   * stream 1: start = 0, end = 50, contentLength = 51
+   * stream 2: start = 51, end = 99, contentLength = 49
+   */
 
   const headers = {
     'Content-Range': `bytes ${start}-${end}/${videoSize}`,
