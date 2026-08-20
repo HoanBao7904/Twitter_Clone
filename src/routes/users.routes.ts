@@ -74,12 +74,7 @@ useRoutes.get('/oauth/google', wrapRequestHandler(oauthController))
  * method: POST
  * body: { username: string, password: string, email: string, date_Of_Birth: ISOString(ISO8601), confirm_Password: string }
  */
-useRoutes.post(
-  '/register',
-  registerValidator,
-
-  wrapRequestHandler(registerController)
-)
+useRoutes.post('/register', registerValidator, wrapRequestHandler(registerController))
 
 /**
  * Description: logouyt a user

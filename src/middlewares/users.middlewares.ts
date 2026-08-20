@@ -694,3 +694,18 @@ export const changePasswordvalidator = validate(
     ['body']
   )
 )
+
+//(req: Request, res: Response, next: NextFunction) => Promise<void>
+
+export const isUserLoggedInValidator = (middleware: (req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    //header vs headers
+    //header không phân biệt chữ hoa hay chữ thường
+    // console.log(req.header('Authorization'))
+    // console.log(req.headers.authorization) //headers mặc đi map với authorization type vậy nên không thay đổi
+    if (req.headers.authorization) {
+      return middleware(req, res, next)
+    }
+    next()
+  }
+}
