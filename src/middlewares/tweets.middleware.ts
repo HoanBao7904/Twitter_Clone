@@ -8,6 +8,7 @@ import { ErrorWithStatus } from '~/models/Errors'
 import Tweet from '~/models/schemas/Twitter.schema'
 import databaseService from '~/services/database.services'
 import { numberEnumToArray } from '~/utils/commons'
+import { wrapRequestHandler } from '~/utils/handlers'
 import { validate } from '~/utils/validation'
 
 const tweetsType = numberEnumToArray(TweetType)
@@ -61,7 +62,10 @@ export const createtweetValidator = validate(
             throw new Error('Content phải là một chuỗi và không được để trống khi không có mentions hoặc hashtags')
           }
           //  Nếu `type` là retweet thì `content` phải là `''`
-          if (TweetType.Retweet && value === '') {
+          // if (TweetType.Retweet && value !== '') {
+          //   throw new Error('Content phải là chuỗi rỗng khi type là retweet')
+          // }
+          if (type === TweetType.Retweet && value !== '') {
             throw new Error('Content phải là chuỗi rỗng khi type là retweet')
           }
           return true
@@ -122,10 +126,121 @@ export const tweetIdvalidator = validate(
             })
           }
 
-          const tweet_id = await databaseService.tweets.findOne({
-            _id: new ObjectId(value)
-          })
+          // const tweet_id = await databaseService.tweets.findOne({
+          //   _id: new ObjectId(value)
+          // })
 
+          const tweet_id = (
+            await databaseService.tweets
+              .aggregate<Tweet>([
+                {
+                  $match: {
+                    _id: new ObjectId(value)
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'hashtags',
+                    localField: 'hashtags',
+                    foreignField: '_id',
+                    as: 'hashtags'
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'mentions',
+                    foreignField: '_id',
+                    as: 'mentions'
+                  }
+                },
+                {
+                  $addFields: {
+                    mentions: {
+                      $map: {
+                        input: '$mentions',
+                        as: 'mention',
+                        in: {
+                          _id: '$$mention._id',
+                          name: '$$mention.name',
+                          username: '$$mention.username',
+                          email: '$$mention.email'
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'bookmarks',
+                    localField: '_id',
+                    foreignField: 'tweet_id',
+                    as: 'bookmarks'
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'likes',
+                    localField: '_id',
+                    foreignField: 'tweet_id',
+                    as: 'likes'
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'tweets',
+                    localField: '_id',
+                    foreignField: 'parent_id',
+                    as: 'tweet_children'
+                  }
+                },
+                {
+                  $addFields: {
+                    bookmarks: {
+                      $size: '$bookmarks'
+                    },
+                    likes: {
+                      $size: '$likes'
+                    },
+                    retweetCount: {
+                      $size: {
+                        $filter: {
+                          input: '$tweet_children',
+                          as: 'children',
+                          cond: {
+                            $eq: ['$$children.type', TweetType.Retweet]
+                          }
+                        }
+                      }
+                    },
+                    CommentCount: {
+                      $size: {
+                        $filter: {
+                          input: '$tweet_children',
+                          as: 'children',
+                          cond: {
+                            $eq: ['$$children.type', TweetType.Comment]
+                          }
+                        }
+                      }
+                    },
+                    QuoteCount: {
+                      $size: {
+                        $filter: {
+                          input: '$tweet_children',
+                          as: 'children',
+                          cond: {
+                            $eq: ['$$children.type', TweetType.QuoteTweet]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ])
+              .toArray()
+          )[0] //lấy thz đầu tiên
+          console.log(tweet_id)
           if (!tweet_id) {
             throw new ErrorWithStatus({
               message: 'not found',
@@ -140,37 +255,70 @@ export const tweetIdvalidator = validate(
   })
 )
 
-export const audienceValidator = async (req: Request, res: Response, next: NextFunction) => {
+// export const audienceValidator = async (req: Request, res: Response, next: NextFunction) => {
+//   const tweet = req.tweet as Tweet
+//   if (tweet.audience === TweetAudience.TwitterCircle) {
+//     //kiểm tra người xem tweet này login chưa
+
+//     if (!req.decoded_authorization) {
+//       throw new ErrorWithStatus({
+//         message: 'User not Login',
+//         status: httpStatus.UNAUTHORIZED
+//       })
+//     }
+//     //kiểm tra tài khoản tác giả có bị khóa hay chưa
+//     const athor = await databaseService.users.findOne({ _id: tweet.user_id })
+//     if (!athor || athor.verify === UserVerifyStatus.Banned) {
+//       throw new ErrorWithStatus({
+//         message: 'not found',
+//         status: 404
+//       })
+//     }
+//     //kiểm tra người xem tweet có trong tweet circle của tác giả hay không
+//     const { user_id } = req.decoded_authorization
+//     const isInTweetcircle = (athor.twitter_circle || []).some((user_id_circle) => user_id_circle.equals(user_id))
+//     //nếu bạn không phải là tác giả và không nằm trong danh sách tweet circle thì lỗi
+//     if (!athor._id.equals(user_id) && !isInTweetcircle) {
+//       throw new ErrorWithStatus({
+//         message: 'tweet is not public',
+//         status: 403
+//       })
+//     }
+
+//     next()
+//   }
+// }
+
+export const audienceValidator = wrapRequestHandler(async (req: Request, res: Response, next: NextFunction) => {
   const tweet = req.tweet as Tweet
   if (tweet.audience === TweetAudience.TwitterCircle) {
-    //kiểm tra người xem tweet này login chưa
-
+    // Kiểm tra người xem tweet này đã đăng nhập hay chưa
     if (!req.decoded_authorization) {
       throw new ErrorWithStatus({
-        message: 'User not Login',
-        status: httpStatus.UNAUTHORIZED
+        status: httpStatus.UNAUTHORIZED,
+        message: 'User not Login'
       })
     }
-    //kiểm tra tài khoản tác giả có bị khóa hay chưa
-    const athor = await databaseService.users.findOne({ _id: tweet.user_id })
-    if (!athor || athor.verify === UserVerifyStatus.Banned) {
+    const author = await databaseService.users.findOne({
+      _id: new ObjectId(tweet.user_id)
+    })
+    // Kiểm tra tài khoản tác giả có ổn (bị khóa hay bị xóa chưa) không
+    if (!author || author.verify === UserVerifyStatus.Banned) {
       throw new ErrorWithStatus({
-        message: 'not found',
-        status: 404
+        status: 404,
+        message: 'not found'
       })
     }
-
-    //kiểm tra người xem tweet có trong tweet circle của tác giả hay không
+    // Kiểm tra người xem tweet này có trong Twitter Circle của tác giả hay không
     const { user_id } = req.decoded_authorization
-    const isInTweetcircle = athor.twitter_circle.some((user_id_circle) => user_id_circle.equals(user_id))
-    //nếu bạn không phải là tác giả và không nằm trong danh sách tweet circle thì lỗi
-    if (!athor._id.equals(user_id) && !isInTweetcircle) {
+    const isInTwitterCircle = (author.twitter_circle || []).some((user_circle_id) => user_circle_id.equals(user_id))
+    // Nếu bạn không phải là tác giả và không nằm trong twitter circle thì quăng lỗi
+    if (!author._id.equals(user_id) && !isInTwitterCircle) {
       throw new ErrorWithStatus({
-        message: 'tweet is not public',
-        status: 403
+        status: 403,
+        message: 'tweet is not public'
       })
     }
-
-    next()
   }
-}
+  next()
+})
