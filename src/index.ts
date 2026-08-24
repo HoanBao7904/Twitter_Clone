@@ -10,7 +10,7 @@ import staticRouter from './routes/statics.route'
 import tweetRoutes from './routes/tweets.route'
 import bookMarksRouter from './routes/bookmarks.route'
 import likesRouter from './routes/likes.route'
-
+// import '~/utils/fake'
 config()
 
 databaService.connect()

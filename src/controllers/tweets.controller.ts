@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { TweetType } from '~/constants/enums'
-import { TweetParam, TweetQuery, TweetRequestBody } from '~/models/requests/Tweet.request'
+import { PaginationQuery, TweetParam, TweetQuery, TweetRequestBody } from '~/models/requests/Tweet.request'
 import { Tokenpayload } from '~/models/requests/User.request'
 import tweetsServices from '~/services/tweets.services'
 export const createtweetController = async (req: Request<ParamsDictionary, any, TweetRequestBody>, res: Response) => {
@@ -15,7 +15,7 @@ export const createtweetController = async (req: Request<ParamsDictionary, any, 
 }
 //  async unbookMarkTweet(tweet_id: string, user_id: string) {
 
-export const getTweetController = async (req: Request<TweetParam, any, TweetQuery>, res: Response) => {
+export const getTweetController = async (req: Request<TweetParam, any, any, TweetQuery>, res: Response) => {
   //nếu query chỗ này thì vấn đề query vào db 2 lần vì trước đó query chỗ validate rồi
   const result = await tweetsServices.increaseView(req.params.tweet_id as string, req.decoded_authorization?.user_id)
   // console.log('result', result)
@@ -51,5 +51,24 @@ export const getTweetChirldrenController = async (req: Request, res: Response) =
     page: page,
     limit: limit,
     total_page: Math.ceil(total / limit)
+  })
+}
+
+export const getNewFeedController = async (
+  req: Request<ParamsDictionary, any, any, PaginationQuery>,
+  res: Response
+) => {
+  const user_id = req.decoded_authorization?.user_id as string
+  const page = Number(req.query.page)
+  const limit = Number(req.query.limit)
+  const result = await tweetsServices.getnewFeeds({ user_id, page, limit })
+  return res.json({
+    message: 'Get new feed SuccessFully',
+    result: {
+      tweets: result.tweets,
+      limit,
+      page,
+      total_page: Math.ceil(result.total / limit)
+    }
   })
 }
