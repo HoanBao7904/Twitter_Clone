@@ -24,7 +24,7 @@ class MediasService {
         await sharp(file.filepath).jpeg({ quality: 80, mozjpeg: true, progressive: true }).toFile(newPath) //mục đích giảm kích thước ảnh khi lưu db
 
         const s3Result = await uploadFileToS3({
-          fileName: newName,
+          fileName: 'images/' + newName, //tạo thêm folder lưu tấm ảnh trong đó
           filePath: newPath,
           ContentType: mine.getType(newPath) as string
         })
@@ -46,15 +46,29 @@ class MediasService {
 
   async handleUploadVideo(req: Request) {
     const files = await handleUploadVideo(req)
+    console.log(files)
 
-    const result = files.map((file) => {
-      return {
-        url: isProduction
-          ? `${process.env.HOST}/static/uploads/video-stream/${file.newFilename}`
-          : `http://localhost:${process.env.PORT}/static/uploads/video-stream/${file.newFilename}`,
-        type: MediaType.Video
-      }
-    })
+    const result: Media[] = await Promise.all(
+      files.map(async (file) => {
+        const s3Result = await uploadFileToS3({
+          fileName: 'videos/' + file.newFilename,
+          filePath: file.filepath,
+          ContentType: mine.getType(file.filepath) as string
+        })
+        fsPromise.unlink(file.filepath)
+
+        return {
+          url: (s3Result as CompleteMultipartUploadCommandOutput).Location as string,
+          type: MediaType.Video
+        }
+        // return {
+        //   url: isProduction
+        //     ? `${process.env.HOST}/static/uploads/video-stream/${file.newFilename}`
+        //     : `http://localhost:${process.env.PORT}/static/uploads/video-stream/${file.newFilename}`,
+        //   type: MediaType.Video
+        // }
+      })
+    )
     return result
   }
 }
