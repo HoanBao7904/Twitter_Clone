@@ -20,7 +20,7 @@ export const handleUploadImage = async (req: Request) => {
   // console.log(path.resolve()) //D:\KHOAHOC\NodeJS_Super(Du Thanh Duoc)\twitter\Backend
   // console.log(path.resolve('uploads')) //D:\KHOAHOC\NodeJS_Super(Du Thanh Duoc)\twitter\Backend\uploads
   const form = formidable({
-    uploadDir: UPLOAD_IMAGE_DIR, //lưu file vào thư mịc đc setup
+    uploadDir: UPLOAD_IMAGE_TEMP_DIR, //lưu file vào thư mịc đc setup
     maxFiles: 4, //số file được upload 1
     keepExtensions: true, //mặc định là false(không có thông tin đuôi chỉ có tên file,nên không xác định được file đó file ảnh)
     maxFileSize: 300 * 1024 * 1024, //300KB nhan them 1024 len 300 mb

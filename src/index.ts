@@ -11,7 +11,7 @@ import tweetRoutes from './routes/tweets.route'
 import bookMarksRouter from './routes/bookmarks.route'
 import likesRouter from './routes/likes.route'
 import useRoutes from './routes/users.routes'
-import path from 'path'
+import '~/utils/s3'
 import cors from 'cors'
 // import '~/utils/fake'
 config()
