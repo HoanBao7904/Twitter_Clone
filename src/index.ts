@@ -1,5 +1,5 @@
 import express from 'express'
-import useroutes from './routes/users.routes'
+
 import databaService from './services/database.services'
 import { defaultErrorHandler } from './middlewares/errors.middleware'
 import mediasRouter from './routes/medias.route'
@@ -10,13 +10,19 @@ import staticRouter from './routes/statics.route'
 import tweetRoutes from './routes/tweets.route'
 import bookMarksRouter from './routes/bookmarks.route'
 import likesRouter from './routes/likes.route'
+import useRoutes from './routes/users.routes'
+import path from 'path'
+import cors from 'cors'
 // import '~/utils/fake'
 config()
+// console.log(path.resolve('src/templates/verify-email.html'))
 
 databaService.connect()
 const PORT = process.env.PORT || 4000
+
 // console.log(process.argv)
 const app = express()
+app.use(cors())
 app.use(express.json())
 // đây là middleware, nó sẽ chạy trước khi vào route, nó sẽ parse body của request thành json
 // nếu không có cái này thì req.body sẽ là undefined
@@ -26,7 +32,7 @@ app.use(express.json())
 //tao folder uploads
 initFolder()
 
-app.use('/users', useroutes) // này là mount router vào app, tất cả các route trong router sẽ có prefix là /api
+app.use('/users', useRoutes) // này là mount router vào app, tất cả các route trong router sẽ có prefix là /api
 
 app.use('/medias', mediasRouter)
 

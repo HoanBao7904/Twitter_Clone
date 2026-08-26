@@ -12,6 +12,8 @@ import { httpStatus } from '~/constants/httpStatus'
 import Follower from '~/models/schemas/follower.schema'
 import axios from 'axios'
 import { access } from 'fs'
+import { sendForgotPasswordEmail, sendRegisterVerifyEmail } from '~/utils/email'
+
 dotenv.config()
 class UsersServices {
   private signAccessToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
@@ -80,7 +82,17 @@ class UsersServices {
       user_id: user_id.toString(),
       verify: UserVerifyStatus.Unverified
     })
-    console.log(email_verify_token)
+    // console.log(email_verify_token)
+    //flow verify email
+    /**
+     * 1 server send email user
+     * 2 user click link in email
+     * 3.client send request to server with email_verify_token
+     * 4.server verify email_verify_token
+     * 5. client nhận access_token and refresh_token
+     */
+    await sendRegisterVerifyEmail(payload.email, email_verify_token)
+
     await databaseService.users.insertOne(
       new User({
         ...payload,
@@ -283,13 +295,14 @@ class UsersServices {
     }
   }
 
-  async resendVerifyEmail(user_id: string) {
+  async resendVerifyEmail(user_id: string, email: string) {
     const email_verify_token = await this.signEmailVerifyToken({
       user_id: user_id,
       verify: UserVerifyStatus.Unverified
     })
+    await sendRegisterVerifyEmail(email, email_verify_token)
     //giả xử đây là gửi email(chưa làm chức năng này)
-    console.log('email verify token: ', email_verify_token)
+    // console.log('email verify token: ', email_verify_token)
     //cập nhập lại giá trị email verify token trong collection user
     await databaseService.users.updateOne(
       { _id: new ObjectId(user_id) },
@@ -307,9 +320,10 @@ class UsersServices {
     }
   }
 
-  async forgotPassword({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+  async forgotPassword({ user_id, verify, email }: { user_id: string; verify: UserVerifyStatus; email: string }) {
     const forgot_password_token = await this.signForgotpasswordToken({ user_id, verify })
-    console.log('forgot_password_token:', forgot_password_token)
+    // console.log('forgot_password_token:', forgot_password_token)
+    await sendForgotPasswordEmail(email, forgot_password_token)
     await databaseService.users.updateOne(
       { _id: new ObjectId(user_id) },
       {

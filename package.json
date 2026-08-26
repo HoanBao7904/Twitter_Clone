@@ -20,6 +20,7 @@
   "license": "ISC",
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/formidable": "^3.5.1",
     "@types/jsonwebtoken": "^9.0.10",
@@ -41,7 +42,9 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1117.0",
     "axios": "^1.19.0",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-validator": "^7.3.2",

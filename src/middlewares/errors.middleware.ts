@@ -17,16 +17,46 @@ function safeStringify(obj: any) {
 }
 
 export const defaultErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
-  if (err instanceof ErrorWithStatus) {
-    res.status(err.status || httpStatus.INTERNAL_SERVER_EROR).json(omit(err, ['status']))
+  try {
+    //     if (err instanceof ErrorWithStatus) {
+    //   res.status(err.status || httpStatus.INTERNAL_SERVER_EROR).json(omit(err, ['status']))
+    // }
+
+    // Object.getOwnPropertyNames(err).forEach((key) => {
+    //   Object.defineProperty(err, key, { enumerable: true })
+    // })
+
+    // res.status(httpStatus.INTERNAL_SERVER_EROR).json({
+    //   message: err.message,
+    //   errorInfo: safeStringify(omit(err, ['stack']))
+    // })
+    if (err instanceof ErrorWithStatus) {
+      res.status(err.status || httpStatus.INTERNAL_SERVER_EROR).json(omit(err, ['status']))
+    }
+
+    const finalError: any = {}
+    Object.getOwnPropertyNames(err).forEach((key) => {
+      if (
+        !Object.getOwnPropertyDescriptor(err, key)?.configurable ||
+        !Object.getOwnPropertyDescriptor(err, key)?.writable
+      ) {
+        return
+      }
+      finalError[key] = err[key]
+    })
+
+    Object.getOwnPropertyNames(err).forEach((key) => {
+      Object.defineProperty(err, key, { enumerable: true })
+    })
+
+    res.status(httpStatus.INTERNAL_SERVER_EROR).json({
+      message: err.message,
+      errorInfo: safeStringify(omit(err, ['stack']))
+    })
+  } catch (error) {
+    res.status(httpStatus.INTERNAL_SERVER_EROR).json({
+      message: 'internal servet error',
+      errorInfo: omit(error as any, ['stack'])
+    })
   }
-
-  Object.getOwnPropertyNames(err).forEach((key) => {
-    Object.defineProperty(err, key, { enumerable: true })
-  })
-
-  res.status(httpStatus.INTERNAL_SERVER_EROR).json({
-    message: err.message,
-    errorInfo: safeStringify(omit(err, ['stack']))
-  })
 }
