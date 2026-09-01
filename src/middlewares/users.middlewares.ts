@@ -663,6 +663,7 @@ export const unFollowValidator = validate(
     ['params']
   )
 )
+
 export const changePasswordvalidator = validate(
   checkSchema(
     {
@@ -709,3 +710,12 @@ export const isUserLoggedInValidator = (middleware: (req: Request, res: Response
     next()
   }
 }
+
+export const getConversationValidator = validate(
+  checkSchema(
+    {
+      receiver_id: userIdSchema
+    },
+    ['params']
+  )
+)

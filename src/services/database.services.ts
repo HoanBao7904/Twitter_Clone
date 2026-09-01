@@ -7,6 +7,7 @@ import Follower from '~/models/schemas/follower.schema'
 import HashTag from '~/models/schemas/Hashtag.schema'
 import BookMark from '~/models/schemas/BookMark.schema'
 import Like from '~/models/schemas/Like.schema'
+import Conversation from '~/models/schemas/Conversation.schema'
 dotenv.config()
 // console.log(process.env.DB_USERNAME)
 // console.log(process.env.DB_PASSWORD)
@@ -58,6 +59,10 @@ class DatabaseService {
 
   get like(): Collection<Like> {
     return this.db.collection(process.env.DB_LIKE_COLLECTION as string)
+  }
+
+  get converSation(): Collection<Conversation> {
+    return this.db.collection(process.env.DB_CONVERSATION_COLLECTION as string)
   }
 }
 

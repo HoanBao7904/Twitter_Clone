@@ -16,6 +16,9 @@ import cors from 'cors'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { da } from '@faker-js/faker/.'
+import Conversation from './models/schemas/Conversation.schema'
+import { ObjectId } from 'mongodb'
+import converSationsRouter from './routes/conversations.route'
 // import '~/utils/fake'
 config()
 // console.log(path.resolve('src/templates/verify-email.html'))
@@ -52,6 +55,8 @@ app.use('/likes', likesRouter)
 // app.use('/static/uploads/video', express.static(UPLOAD_VIDEO_DIR))
 app.use('/static', staticRouter)
 
+app.use('/conversations', converSationsRouter)
+
 app.use(defaultErrorHandler)
 
 const io = new Server(httpServer, {
@@ -78,17 +83,26 @@ io.on('connection', (socket) => {
   }
   console.log(users)
 
-  socket.on('private message', (data) => {
+  socket.on('send_message', async (data) => {
     //lấy id socket từ userId muốn gửi đến(xác định được muốn gửi tới thz đó)
-    const receiver_socket_id = users[data.to]?.socket_id
+    const { content, sender_id, receiver_id } = data.payload
+    const receiver_socket_id = users[receiver_id]?.socket_id
     if (!receiver_socket_id) {
       return
     }
 
+    const conversation = new Conversation({
+      sender_id: new ObjectId(sender_id),
+      content: content,
+      receiver_id: new ObjectId(receiver_id)
+    })
+
+    const result = await databaService.converSation.insertOne(conversation)
+    conversation._id = result.insertedId
+
     console.log('receiver_socket_id', receiver_socket_id)
-    socket.to(receiver_socket_id).emit('receiver private message', {
-      content: data.value,
-      from: userId
+    socket.to(receiver_socket_id).emit('receive_message', {
+      payload: conversation
     })
   })
   socket.on('disconnect', () => {
