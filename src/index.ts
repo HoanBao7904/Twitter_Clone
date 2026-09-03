@@ -14,11 +14,11 @@ import useRoutes from './routes/users.routes'
 import '~/utils/s3'
 import cors from 'cors'
 import { createServer } from 'http'
-import { Server } from 'socket.io'
-import { da } from '@faker-js/faker/.'
-import Conversation from './models/schemas/Conversation.schema'
-import { ObjectId } from 'mongodb'
 import converSationsRouter from './routes/conversations.route'
+import initSocket from './utils/socket'
+
+// import { da } from '@faker-js/faker/.'
+
 // import '~/utils/fake'
 config()
 // console.log(path.resolve('src/templates/verify-email.html'))
@@ -51,7 +51,7 @@ app.use('/tweets', tweetRoutes)
 app.use('/bookmarks', bookMarksRouter)
 
 app.use('/likes', likesRouter)
-// console.log(UPLOAD_IMAGE_DIR)
+
 // app.use('/static/uploads/video', express.static(UPLOAD_VIDEO_DIR))
 app.use('/static', staticRouter)
 
@@ -59,57 +59,7 @@ app.use('/conversations', converSationsRouter)
 
 app.use(defaultErrorHandler)
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: 'http://localhost:3000'
-  }
-})
-
-const users: {
-  [key: string]: {
-    socket_id: string
-  }
-} = {}
-
-io.on('connection', (socket) => {
-  console.log(`userid: ${socket.id} connected `)
-  console.log(socket.handshake.auth)
-  console.log(socket.handshake.auth._id1)
-
-  const userId = socket.handshake.auth._id1
-
-  users[userId] = {
-    socket_id: socket.id
-  }
-  console.log(users)
-
-  socket.on('send_message', async (data) => {
-    //lấy id socket từ userId muốn gửi đến(xác định được muốn gửi tới thz đó)
-    const { content, sender_id, receiver_id } = data.payload
-    const receiver_socket_id = users[receiver_id]?.socket_id
-    if (!receiver_socket_id) {
-      return
-    }
-
-    const conversation = new Conversation({
-      sender_id: new ObjectId(sender_id),
-      content: content,
-      receiver_id: new ObjectId(receiver_id)
-    })
-
-    const result = await databaService.converSation.insertOne(conversation)
-    conversation._id = result.insertedId
-
-    console.log('receiver_socket_id', receiver_socket_id)
-    socket.to(receiver_socket_id).emit('receive_message', {
-      payload: conversation
-    })
-  })
-  socket.on('disconnect', () => {
-    delete users[userId]
-    console.log(`userid: ${socket.id} disconnected `)
-  })
-})
+initSocket(httpServer)
 
 httpServer.listen(PORT, () => {
   console.log(`listening on port ${PORT}`)
