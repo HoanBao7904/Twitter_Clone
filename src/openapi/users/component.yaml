@@ -1,0 +1,96 @@
+components:
+  schemas:
+    loginBody:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          description: 'Email đăng nhập'
+          example: 'nguyenhoanbao4+2@gmail.com'
+        password:
+          type: string
+          description: 'Mật khẩu đăng nhập'
+          example: 'HoanBao7904@'
+    successAuthentication:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: 'Access token dùng cho xác thực API'
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        refresh_token:
+          type: string
+          description: 'Refresh token dùng để cấp lại Access token'
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    user:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: MongoId
+          description: 'ID duy nhất của user'
+          example: '6a8d7baab84fc9ffa0bd9a89'
+        name:
+          type: string
+          description: 'Tên hiển thị'
+          example: 'baonguyendev'
+        email:
+          type: string
+          description: 'Địa chỉ email'
+          example: 'nguyenhoanbao4+2@gmail.com'
+        date_of_birth:
+          type: string
+          format: ISO 8601
+          description: 'Ngày sinh (ISO 8601)'
+          example: '2026-08-25T10:56:26.846Z'
+        created_at:
+          type: string
+          format: ISO 8601
+          description: 'Thời gian tạo tài khoản'
+          example: '2026-08-25T11:25:30.020Z'
+        updated_at:
+          type: string
+          format: ISO 8601
+          description: 'Thời gian cập nhật lần cuối'
+          example: '2026-08-25T11:25:30.020Z'
+        verify:
+          $ref: '#/components/schemas/userVerifyStatus'
+        twitter_circle:
+          type: array
+          description: 'Danh sách user_id trong Twitter Circle'
+          items:
+            type: string
+            format: MongoId
+          example: ['6a8d7baab84fc9ffa0bd9a89', '6a8d7baab84fc9ffa0bd9a90']
+        bio:
+          type: string
+          description: 'Tiểu sử'
+          example: ''
+        location:
+          type: string
+          description: 'Vị trí'
+          example: 'Da Nang, Viet Nam'
+        website:
+          type: string
+          description: 'Trang web cá nhân'
+          example: 'https://example.com'
+        username:
+          type: string
+          description: 'Username duy nhất'
+          example: 'user6a8d7baab84fc9ffa0bd9a89'
+        avatar:
+          type: string
+          description: 'Đường dẫn ảnh đại diện'
+          example: 'https://localhost:4000/images/avatar/6a8d7baab84fc9ffa0bd9a89.png'
+        cover_photo:
+          type: string
+          description: 'Đường dẫn ảnh bìa'
+          example: 'https://localhost:4000/images/cover_photo/6a8d7baab84fc9ffa0bd9a89.png'
+
+    userVerifyStatus:
+      type: number
+      enum: [Unverified, Verified, Banned]
+      example: 1

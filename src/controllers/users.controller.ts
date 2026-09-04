@@ -17,7 +17,7 @@ import {
   UpdateReqBody,
   VerifyEmailReqBody
 } from '~/models/requests/User.request'
-import User from '~/models/schemas/User.schemas'
+import User from '~/models/schemas/User.schema'
 import databaseService from '~/services/database.services'
 // import databaseService from '~/services/database.services'
 import usersServices from '~/services/users.services'

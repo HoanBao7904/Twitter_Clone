@@ -54,13 +54,55 @@ const useRoutes = Router()
 // )
 
 /**
- * Description: Login a user
- * path: /login
- * method: POST
- * body: { password: string, email: string }
+ * @openapi
+ * /users/login:
+ *   post:
+ *     tags:
+ *       - users
+ *     summary: Đăng nhập
+ *     description: Đăng nhập vào hệ thống để lấy Access Token và Refresh Token
+ *     operationId: login
+ *     requestBody:
+ *       description: Thông tin đăng nhập
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/loginBody'
+ *     responses:
+ *       '200':
+ *         description: Đăng nhập thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: login success
+ *                 result:
+ *                   $ref: '#/components/schemas/successAuthentication'
+ *       '422':
+ *         description: Thông tin đăng nhập không hợp lệ
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: login failed
+ *                 result:
+ *                   type: object
+ *                   properties:
+ *                     email:
+ *                       type: string
+ *                       example: email is required
+ *                     password:
+ *                       type: string
+ *                       example: password is required
  */
 useRoutes.post('/login', loginValidator, wrapRequestHandler(loginController))
-
 /**
  * Description: Login with google
  * path: /oauth/google

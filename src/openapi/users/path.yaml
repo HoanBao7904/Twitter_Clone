@@ -1,0 +1,80 @@
+openapi: '3.0.3'
+info:
+  title: Twitter API clone 2026
+  description: API documentation for Twitter API clone
+  version: 1.0.0
+
+servers:
+  - description: Dev API Gateway
+    url: http://localhost:4000
+  - description: Production API Gateway
+    url: https://twitter-clone.nguyenhoanbao.com/api/v2
+
+tags:
+  - name: 'users'
+    description: 'Các API liên quan đến user'
+
+paths:
+  /users/login:
+    post:
+      tags:
+        - 'users'
+      summary: 'Đăng nhập'
+      description: 'Đăng nhập vào hệ thống để lấy Access Token và Refresh Token'
+      operationId: 'login'
+      requestBody:
+        description: 'Thông tin đăng nhập'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/loginBody'
+
+      responses:
+        '200':
+          description: 'Đăng nhập thành công'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'login success'
+                  result:
+                    $ref: '#/components/schemas/successAuthentication'
+        '422':
+          description: 'Thông tin đăng nhập không hợp lệ'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 'login failed'
+                  result:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                        example: 'email is required'
+                      password:
+                        type: string
+                        example: 'password is required'
+  /users/me:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - 'users'
+      summary: 'Lấy thông tin user hiện tại'
+      description: 'Lấy thông tin user hiện tại dựa trên Access Token'
+      operationId: 'GetMe'
+      responses:
+        '200':
+          description: 'Lấy thông tin user thành công'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'

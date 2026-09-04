@@ -1,4 +1,4 @@
-import User from './models/schemas/User.schemas'
+import User from './models/schemas/User.schema'
 import { Tokenpayload } from './models/requests/User.request'
 import Tweet from './models/schemas/Twitter.schema'
 

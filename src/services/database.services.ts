@@ -1,6 +1,6 @@
 import { MongoClient, Db, Collection } from 'mongodb'
 import dotenv from 'dotenv'
-import User from '~/models/schemas/User.schemas'
+import User from '~/models/schemas/User.schema'
 import RefreshToken from '~/models/schemas/RefreshToken.schemas'
 import Tweet from '~/models/schemas/Twitter.schema'
 import Follower from '~/models/schemas/follower.schema'

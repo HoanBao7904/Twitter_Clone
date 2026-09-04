@@ -10,16 +10,66 @@ import staticRouter from './routes/statics.route'
 import tweetRoutes from './routes/tweets.route'
 import bookMarksRouter from './routes/bookmarks.route'
 import likesRouter from './routes/likes.route'
-import useRoutes from './routes/users.routes'
+import useRoutes from './routes/users.route'
 import '~/utils/s3'
 import cors from 'cors'
 import { createServer } from 'http'
 import converSationsRouter from './routes/conversations.route'
 import initSocket from './utils/socket'
+import YAML from 'yaml'
+import swaggerUi from 'swagger-ui-express'
+import swaggerJsdoc from 'swagger-jsdoc'
+// import fs from 'fs'
+// import path from 'path'
 
 // import { da } from '@faker-js/faker/.'
 
 // import '~/utils/fake'
+
+// const file = fs.readFileSync(path.resolve('./src/twitter-swagger.yaml'), 'utf8')
+// const swaggerDocument = YAML.parse(file)
+
+// const options: swaggerJsdoc.Options = {
+//   definition: {
+//     openapi: '3.0.0',
+//     info: {
+//       title: 'Twitter API Documentation',
+//       version: '1.0.0'
+//     },
+//     components: {
+//       securitySchemes: {
+//         bearerAuth: {
+//           type: 'http',
+//           scheme: 'bearer',
+//           bearerFormat: 'JWT'
+//         }
+//       }
+//     }
+//   },
+//   apis: ['./src/routes/*.route.ts', './src/models/schemas/*.schema.ts'] // files containing annotations as above
+// }
+
+const options: swaggerJsdoc.Options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Twitter API Documentation',
+      version: '1.0.0'
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
+    }
+  },
+  apis: ['./src/openapi/users/*.yaml'] // files containing annotations as above
+}
+const openapiSpecification = swaggerJsdoc(options)
+
 config()
 // console.log(path.resolve('src/templates/verify-email.html'))
 
@@ -28,6 +78,9 @@ const PORT = process.env.PORT || 4000
 
 // console.log(process.argv)
 const app = express()
+
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification))
 
 const httpServer = createServer(app)
 
