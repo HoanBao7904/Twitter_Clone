@@ -7,7 +7,7 @@ import { RegisterRequestBody } from '~/models/requests/User.request'
 import databaseService from '~/services/database.services'
 import { HashPassword } from './crypto'
 import User from '~/models/schemas/User.schema'
-import Follower from '~/models/schemas/follower.schema'
+import Follower from '~/models/schemas/Follower.schema'
 import HashTag from '~/models/schemas/Hashtag.schema'
 import Tweet from '~/models/schemas/Twitter.schema'
 

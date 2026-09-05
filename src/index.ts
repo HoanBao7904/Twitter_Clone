@@ -1,5 +1,5 @@
+import 'module-alias/register'
 import express from 'express'
-
 import databaService from './services/database.services'
 import { defaultErrorHandler } from './middlewares/errors.middleware'
 import mediasRouter from './routes/medias.route'

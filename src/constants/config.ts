@@ -1,12 +1,33 @@
 import { config } from 'dotenv'
-import argv from 'minimist'
+// import argv from 'minimist'
 import { StringValue } from 'ms'
-const options = argv(process.argv.slice(2))
-export const isProduction = options.env === 'production'
+import fs from 'fs'
+import path from 'path'
+// const options = argv(process.argv.slice(2))
+
+const env = process.env.NODE_ENV
+const envFilename = `.env.${env}`
+if (!env) {
+  console.log('bạn chưa cung cấp biến môi trường NODE_ENV')
+  console.log('phát hiện NODE_ENV=', env)
+  process.exit(1)
+}
+
+console.log(`phát hiện NODE_ENV=${env}, vì vậy app sẽ dùng file môi trường ${envFilename}`)
+
+if (!fs.existsSync(path.resolve(envFilename))) {
+  console.log(`Không tìm thấy file môi trường ${envFilename}`)
+  console.log(`Lưu ý: App không dùng file .env, ví dụ môi trường là development thì app sẽ dùng file .env.development`)
+  console.log(`Vui lòng tạo file ${envFilename} và tham khảo nội dung ở file .env.example`)
+  process.exit(1)
+}
 
 config({
-  path: options.env ? `.env.${options.env}` : '.env'
+  path: envFilename
 })
+
+export const isProduction = env === 'production'
+//npx nodemon --env=staging để lấy env từ options
 
 export const envConfig = {
   awsRegion: process.env.AWS_REGION as string,
