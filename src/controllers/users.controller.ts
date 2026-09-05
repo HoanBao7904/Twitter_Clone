@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { ObjectId } from 'mongodb'
+import { envConfig } from '~/constants/config'
 import { UserVerifyStatus } from '~/constants/enums'
 import { httpStatus } from '~/constants/httpStatus'
 import {
@@ -39,7 +40,7 @@ export const oauthController = async (req: Request, res: Response, next: NextFun
   const { code } = req.query
   const result = await usersServices.oauth(code as string)
   console.log(code)
-  const urlRedirect = `${process.env.CLIENT_REDIRECT_CALLBACK}?access_token=${result.access_token}&refresh_token=${result.refresh_token}&new_user=${result.newUser}&verify=${result.verify}`
+  const urlRedirect = `${envConfig.clientRedirectCallback}?access_token=${result.access_token}&refresh_token=${result.refresh_token}&new_user=${result.newUser}&verify=${result.verify}`
   return res.redirect(urlRedirect)
   // res.json({
   //   message: result.newUser ? 'Register success' : 'login success',

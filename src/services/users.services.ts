@@ -9,10 +9,11 @@ import { ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
 import { ErrorWithStatus } from '~/models/Errors'
 import { httpStatus } from '~/constants/httpStatus'
-import Follower from '~/models/schemas/follower.schema'
+import Follower from '~/models/schemas/Follower.schema'
 import axios from 'axios'
 import { access } from 'fs'
 import { sendForgotPasswordEmail, sendRegisterVerifyEmail } from '~/utils/email'
+import { envConfig } from '~/constants/config'
 
 dotenv.config()
 class UsersServices {
@@ -23,9 +24,9 @@ class UsersServices {
         token_type: TokenTypes.AccessToken,
         verify
       },
-      privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string,
+      privateKey: envConfig.jwtSecretAccessToken,
       options: {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN as '100d'
+        expiresIn: envConfig.accessTokenExpiresIn
       }
     })
   }
@@ -37,9 +38,9 @@ class UsersServices {
         token_type: TokenTypes.RefreshToken,
         verify
       },
-      privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
+      privateKey: envConfig.jwtScretRefreshToken,
       options: {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN as '15m'
+        expiresIn: envConfig.refreshTokenExpiresIn
       }
     })
   }
@@ -51,9 +52,9 @@ class UsersServices {
         token_type: TokenTypes.EmailVerifyToken,
         verify
       },
-      privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
+      privateKey: envConfig.jwtSecretEmailVerifyToken,
       options: {
-        expiresIn: process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN as '7d'
+        expiresIn: envConfig.emailVerifyTokenExpiresIn
       }
     })
   }
@@ -65,9 +66,9 @@ class UsersServices {
         token_type: TokenTypes.ForgotPasswordToken,
         verify
       },
-      privateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string,
+      privateKey: envConfig.jwtSecretForgotPasswordToken,
       options: {
-        expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPIRES_IN as '7d'
+        expiresIn: envConfig.fogotPasswordTokenExpiresIn
       }
     })
   }
@@ -139,9 +140,9 @@ class UsersServices {
   private async getOauthGoogleToken(code: string) {
     const body = {
       code: code,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      client_id: envConfig.googleClientId,
+      client_secret: envConfig.googleClientSecret,
+      redirect_uri: envConfig.googleRedirectUri,
       grant_type: 'authorization_code'
     }
     const { data } = await axios.post('https://oauth2.googleapis.com/token', body, {
