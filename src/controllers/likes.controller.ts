@@ -6,7 +6,7 @@ export const LikeTweetController = async (req: Request, res: Response) => {
   const { user_id } = req.decoded_authorization as Tokenpayload
   const { tweet_id } = req.body
   const result = await likesService.LikeTweet(tweet_id.toString(), user_id)
-  console.log(result)
+
   return res.json({
     message: 'LikeTweet SuccessFully',
     result: result

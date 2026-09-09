@@ -1,4 +1,3 @@
-import 'module-alias/register'
 import express from 'express'
 import databaService from './services/database.services'
 import { defaultErrorHandler } from './middlewares/errors.middleware'
@@ -76,6 +75,7 @@ const openapiSpecification = swaggerJsdoc(options)
 // console.log(path.resolve('src/templates/verify-email.html'))
 
 databaService.connect()
+
 const PORT = envConfig.port
 
 // console.log(process.argv)

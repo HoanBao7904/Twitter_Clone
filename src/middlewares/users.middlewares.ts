@@ -675,7 +675,7 @@ export const changePasswordvalidator = validate(
           options: async (value: string, { req }) => {
             const decoded = (req as Request).decoded_authorization as Tokenpayload
             const user_id = decoded.user_id
-            console.log('user_id', user_id)
+
             const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) })
             if (!user) {
               throw new ErrorWithStatus({ message: 'User not found', status: httpStatus.NOT_FOUND })

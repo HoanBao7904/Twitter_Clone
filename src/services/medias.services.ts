@@ -1,17 +1,17 @@
 import { Request } from 'express'
 import sharp from 'sharp'
 import path from 'path'
-import fs from 'fs'
 import fsPromise from 'fs/promises'
 import { config } from 'dotenv'
 import { getNameFromFullName, handleUploadImage, handleUploadVideo } from '~/utils/file'
 import { UPLOAD_IMAGE_DIR } from '~/constants/dir'
-import { isProduction } from '~/constants/config'
 import { MediaType } from '~/constants/enums'
 import { Media } from '~/models/Orther'
 import { uploadFileToS3 } from '~/utils/s3'
 import mine from 'mime'
 import { CompleteMultipartUploadCommandOutput } from '@aws-sdk/client-s3'
+import { envConfig, isProduction } from '~/constants/config'
+
 config()
 
 class MediasService {
@@ -23,22 +23,22 @@ class MediasService {
         const newPath = path.resolve(UPLOAD_IMAGE_DIR, `${newName}.jpg`)
         await sharp(file.filepath).jpeg({ quality: 80, mozjpeg: true, progressive: true }).toFile(newPath) //mục đích giảm kích thước ảnh khi lưu db
 
-        const s3Result = await uploadFileToS3({
-          fileName: 'images/' + newName, //tạo thêm folder lưu tấm ảnh trong đó
-          filePath: newPath,
-          ContentType: mine.getType(newPath) as string
-        })
-        await Promise.all([fsPromise.unlink(file.filepath), fsPromise.unlink(newPath)])
-        return {
-          url: (s3Result as CompleteMultipartUploadCommandOutput).Location as string,
-          type: MediaType.Image
-        }
+        // const s3Result = await uploadFileToS3({
+        //   fileName: 'images/' + newName, //tạo thêm folder lưu tấm ảnh trong đó
+        //   filePath: newPath,
+        //   ContentType: mine.getType(newPath) as string
+        // })
+        // await Promise.all([fsPromise.unlink(file.filepath), fsPromise.unlink(newPath)])
         // return {
-        //   url: isProduction
-        //     ? `${process.env.HOST}/static/uploads/image/${newName}.jpg`
-        //     : `http://localhost:${process.env.PORT}/static/uploads/image/${newName}.jpg`,
+        //   url: (s3Result as CompleteMultipartUploadCommandOutput).Location as string,
         //   type: MediaType.Image
         // }
+        return {
+          url: isProduction
+            ? `${envConfig.port}/static/uploads/image/${newName}.jpg`
+            : `http://localhost:${envConfig.port}/static/uploads/image/${newName}.jpg`,
+          type: MediaType.Image
+        }
       })
     )
     return result
@@ -46,7 +46,6 @@ class MediasService {
 
   async handleUploadVideo(req: Request) {
     const files = await handleUploadVideo(req)
-    console.log(files)
 
     const result: Media[] = await Promise.all(
       files.map(async (file) => {

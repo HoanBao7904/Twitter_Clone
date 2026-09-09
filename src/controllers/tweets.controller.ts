@@ -7,7 +7,7 @@ import tweetsServices from '~/services/tweets.services'
 export const createtweetController = async (req: Request<ParamsDictionary, any, TweetRequestBody>, res: Response) => {
   const { user_id } = req.decoded_authorization as Tokenpayload
   const result = await tweetsServices.createTweet(user_id, req.body)
-  console.log(result)
+
   return res.json({
     message: 'createTweet SuccessFully',
     result: result

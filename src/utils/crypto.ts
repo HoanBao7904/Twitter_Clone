@@ -9,5 +9,3 @@ function sha256(content: string) {
 export function HashPassword(password: string) {
   return sha256(password + envConfig.passwordSecret)
 }
-
-console.log('hello' + envConfig.passwordSecret)

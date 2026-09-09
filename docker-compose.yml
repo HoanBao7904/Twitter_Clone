@@ -1,0 +1,8 @@
+version: '3'
+services:
+  twitter:
+    image: hoanbao/nodejs:v1
+    ports:
+      - 3000:4000
+    volumes:
+      - D:\KHOAHOC\NodeJS_Super(Du Thanh Duoc)\twitter\Backend\uploads:/app/uploads

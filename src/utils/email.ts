@@ -5,7 +5,7 @@ import { config } from 'dotenv'
 import fs from 'fs'
 import path from 'path'
 import { envConfig } from '~/constants/config'
-console.log(path)
+
 config()
 // Create SES service object.
 const sesClient = new SESClient({

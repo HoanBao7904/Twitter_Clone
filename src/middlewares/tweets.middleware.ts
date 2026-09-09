@@ -240,7 +240,7 @@ export const tweetIdvalidator = validate(
               ])
               .toArray()
           )[0] //lấy thz đầu tiên
-          console.log(tweet_id)
+
           if (!tweet_id) {
             throw new ErrorWithStatus({
               message: 'not found',
@@ -269,7 +269,7 @@ export const getTweetChildrenValidator = validate(
         custom: {
           options: (value, { req }) => {
             const num = Number(value)
-            console.log(num)
+
             if (num <= 1 || num >= 100) {
               throw new Error('limit >= 1 && limit <= 100')
             }
@@ -370,7 +370,7 @@ export const panigationValidator = validate(
         custom: {
           options: (value, { req }) => {
             const num = Number(value)
-            console.log(num)
+
             if (num <= 1 || num >= 100) {
               throw new Error('limit >= 1 && limit <= 100')
             }

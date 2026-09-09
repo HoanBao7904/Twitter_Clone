@@ -21,7 +21,7 @@ class TweetsService {
 
   async createTweet(user_id: string, body: TweetRequestBody) {
     const hashtags = await this.checkAndCreateHashtag(body.hashtags)
-    console.log(hashtags)
+
     const result = await databaseService.tweets.insertOne(
       new Tweet({
         audience: body.audience,

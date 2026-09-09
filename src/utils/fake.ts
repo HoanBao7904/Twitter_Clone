@@ -60,7 +60,6 @@ const users: RegisterRequestBody[] = faker.helpers.multiple(createRandomUser, {
 })
 
 const insertMultipleUsers = async (users: RegisterRequestBody[]) => {
-  console.log('Creating users...')
   const result = await Promise.all(
     users.map(async (user) => {
       const user_id = new ObjectId()
@@ -77,12 +76,11 @@ const insertMultipleUsers = async (users: RegisterRequestBody[]) => {
       return user_id
     })
   )
-  console.log(`Created ${result.length} users`)
+
   return result
 }
 
 const followMultipleUsers = async (user_id: ObjectId, followed_user_ids: ObjectId[]) => {
-  console.log('Start following...')
   const result = await Promise.all(
     followed_user_ids.map((followed_user_id) =>
       databaseService.follower.insertOne(
@@ -93,7 +91,6 @@ const followMultipleUsers = async (user_id: ObjectId, followed_user_ids: ObjectI
       )
     )
   )
-  console.log(`Followed ${result.length} users`)
 }
 
 const checkAndCreateHashtags = async (hashtags: string[]) => {
@@ -133,14 +130,11 @@ const insertTweet = async (user_id: ObjectId, body: TweetRequestBody) => {
 }
 
 const insertMultipleTweets = async (ids: ObjectId[]) => {
-  console.log('Creating tweets...')
-  console.log(`Counting...`)
   let count = 0
   const result = await Promise.all(
     ids.map(async (id, index) => {
       await Promise.all([insertTweet(id, createRandomTweet()), insertTweet(id, createRandomTweet())])
       count += 2
-      console.log(`Created ${count} tweets`)
     })
   )
   return result
