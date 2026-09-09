@@ -23,22 +23,22 @@ class MediasService {
         const newPath = path.resolve(UPLOAD_IMAGE_DIR, `${newName}.jpg`)
         await sharp(file.filepath).jpeg({ quality: 80, mozjpeg: true, progressive: true }).toFile(newPath) //mục đích giảm kích thước ảnh khi lưu db
 
-        // const s3Result = await uploadFileToS3({
-        //   fileName: 'images/' + newName, //tạo thêm folder lưu tấm ảnh trong đó
-        //   filePath: newPath,
-        //   ContentType: mine.getType(newPath) as string
-        // })
-        // await Promise.all([fsPromise.unlink(file.filepath), fsPromise.unlink(newPath)])
-        // return {
-        //   url: (s3Result as CompleteMultipartUploadCommandOutput).Location as string,
-        //   type: MediaType.Image
-        // }
+        const s3Result = await uploadFileToS3({
+          fileName: 'images/' + newName, //tạo thêm folder lưu tấm ảnh trong đó
+          filePath: newPath,
+          ContentType: mine.getType(newPath) as string
+        })
+        await Promise.all([fsPromise.unlink(file.filepath), fsPromise.unlink(newPath)])
         return {
-          url: isProduction
-            ? `${envConfig.port}/static/uploads/image/${newName}.jpg`
-            : `http://localhost:${envConfig.port}/static/uploads/image/${newName}.jpg`,
+          url: (s3Result as CompleteMultipartUploadCommandOutput).Location as string,
           type: MediaType.Image
         }
+        // return {
+        //   url: isProduction
+        //     ? `${envConfig.port}/static/uploads/image/${newName}.jpg`
+        //     : `http://localhost:${envConfig.port}/static/uploads/image/${newName}.jpg`,
+        //   type: MediaType.Image
+        // }
       })
     )
     return result

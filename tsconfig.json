@@ -39,5 +39,5 @@
   },
   "files": ["src/type.d.ts"],
   "include": ["src/**/*"],
-  "exclude": ["src/utils/fake.ts"]
+  "exclude": ["src/utils/fakeDb.ts"]
 }
