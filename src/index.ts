@@ -21,6 +21,11 @@ import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
 import { envConfig, isProduction } from './constants/config'
 import { rateLimit } from 'express-rate-limit'
+import searchRouter from './routes/searchs.route'
+
+databaService.connect().then(() => {
+  databaService.indexTweets()
+})
 // import fs from 'fs'
 // import path from 'path'
 
@@ -127,6 +132,8 @@ app.use('/likes', likesRouter)
 app.use('/static', staticRouter)
 
 app.use('/conversations', converSationsRouter)
+
+app.use('/search', searchRouter)
 
 app.use(defaultErrorHandler)
 
