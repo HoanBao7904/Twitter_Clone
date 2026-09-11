@@ -272,6 +272,11 @@ class TweetsService {
         }
       )
       .toArray()
+    //       [
+    //   { followed_user_id: "B" },
+    //   { followed_user_id: "C" },
+    //   { followed_user_id: "D" }
+    // ]
 
     const ids = followed_user_ids.map((item) => item.followed_user_id)
     //mong muốn nguồn dữ liệu tweet sẽ lấy cái bài tweet của mình nữa nên là push user_id
@@ -513,7 +518,7 @@ class TweetsService {
     })
     return {
       tweets,
-      total: total[0].total
+      total: total[0]?.total || 0
     }
   }
 }

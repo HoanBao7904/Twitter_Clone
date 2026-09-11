@@ -1,6 +1,6 @@
 import databaseService from './database.services'
 import { ObjectId } from 'mongodb'
-import { MediaType, MediaTypeQuery, TweetType } from '~/constants/enums'
+import { MediaType, MediaTypeQuery, PeopleFollowQuery, TweetType } from '~/constants/enums'
 
 class SearchService {
   async search({
@@ -8,13 +8,15 @@ class SearchService {
     limit,
     page,
     user_id,
-    media_type
+    media_type,
+    people_follow
   }: {
     limit: number
     page: number
     content: string
     user_id: string
-    media_type: MediaTypeQuery
+    media_type?: MediaTypeQuery
+    people_follow?: PeopleFollowQuery
   }) {
     // const result = await databaseService.tweets
     //   .find({ $text: { $search: content } })
@@ -35,6 +37,34 @@ class SearchService {
         match['medias.type'] = MediaType.Video
       }
     }
+
+    if (people_follow && people_follow === PeopleFollowQuery.following) {
+      const user_id_owner = new ObjectId(user_id)
+      const followed_user_ids = await databaseService.follower
+        .find(
+          { user_id: user_id_owner },
+          {
+            projection: {
+              followed_user_id: 1,
+              _id: 0
+            }
+          }
+        )
+        .toArray()
+
+      const ids = followed_user_ids.map((item) => {
+        return item.followed_user_id
+      })
+
+      ids.push(user_id_owner)
+
+      match['user_id'] = {
+        $in: ids
+      }
+
+      // console.log(ids)
+    }
+
     const [tweets, total] = await Promise.all([
       databaseService.tweets
         .aggregate([
