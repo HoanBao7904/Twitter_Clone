@@ -34,6 +34,12 @@ class DatabaseService {
     }
   }
 
+  indexUser() {
+    this.users.createIndex({ email: 1, password: 1 })
+    this.users.createIndex({ email: 1 }, { unique: true })
+    this.users.createIndex({ username: 1 }, { unique: true })
+  }
+
   async indexTweets() {
     const exists = await this.tweets.indexExists('content_text')
     if (!exists) {

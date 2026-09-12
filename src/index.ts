@@ -25,7 +25,9 @@ import searchRouter from './routes/searchs.route'
 
 databaService.connect().then(() => {
   databaService.indexTweets()
+  databaService.indexUser()
 })
+
 // import fs from 'fs'
 // import path from 'path'
 

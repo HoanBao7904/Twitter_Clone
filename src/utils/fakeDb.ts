@@ -150,3 +150,33 @@ insertMultipleUsers(users).then((ids) => {
     console.log(err)
   })
 })
+
+// const mgclient = new MongoClient(
+//   `mongodb+srv://${envConfig.dbUserName}:${envConfig.dbPassword}@cluster0.50lsru5.mongodb.net/?appName=Cluster0`
+// )
+// const db = mgclient.db('earth')
+
+// const user = db.collection('users')
+
+// const userData = []
+
+// const getNumberRamdom = () => {
+//   return Math.floor(Math.random() * 100)
+// }
+
+// const getAddressRandom = () => {
+//   const address = ['Đà Nẵng', 'TPHCM', 'Hà Nội', 'Huế', 'Quảng Nam']
+//   const length = address.length
+//   return address[Math.floor(Math.random() * length)]
+// }
+
+// for (let i = 0; i < 1000; i++) {
+//   userData.push({
+//     name: `user ${i + 1}`,
+//     sex: i % 2 === 0 ? 'Nam' : 'Nữ',
+//     age: getNumberRamdom(),
+//     address: getAddressRandom()
+//   })
+// }
+
+// user.insertMany(userData)

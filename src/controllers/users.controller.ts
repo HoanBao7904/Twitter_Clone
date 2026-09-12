@@ -35,7 +35,7 @@ export const loginController = async (req: Request<ParamsDictionary, any, Logout
   })
 }
 
-export const oauthController = async (req: Request, res: Response, next: NextFunction) => {
+export const oauthController = async (req: Request, res: Response) => {
   // console.log(req.url)
   const { code } = req.query
   const result = await usersServices.oauth(code as string)
@@ -76,8 +76,8 @@ export const refreshTokenController = async (
   res: Response
 ) => {
   const { refresh_Token } = req.body
-  const { user_id, verify } = req.decoded_refresh_token as Tokenpayload
-  const result = await usersServices.refershToken({ user_id, verify, refresh_Token })
+  const { user_id, verify, exp } = req.decoded_refresh_token as Tokenpayload
+  const result = await usersServices.refershToken({ user_id, verify, refresh_Token, exp })
   return res.json({
     message: 'Refresh token successfully',
     result: result
