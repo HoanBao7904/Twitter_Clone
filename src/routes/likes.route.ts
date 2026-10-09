@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { LikeTweetController, unLikeTweetController } from '~/controllers/likes.controller'
+import { LikeTweetController, ListLikedTweetsController, unLikeTweetController } from '~/controllers/likes.controller'
 import { tweetIdvalidator } from '~/middlewares/tweets.middleware'
 import { accessTokenValidator, verifyUserValidator } from '~/middlewares/users.middlewares'
 import { wrapRequestHandler } from '~/utils/handlers'
@@ -35,5 +35,14 @@ likesRouter.delete(
   tweetIdvalidator,
   wrapRequestHandler(unLikeTweetController)
 )
+
+/**
+ * Description: List all liked tweets by user
+ * path: '/history/likes'
+ * method: GET
+ * body: {}
+ * header :{Authorization: Bearer <access_token>}
+ */
+likesRouter.get('/history', accessTokenValidator, verifyUserValidator, wrapRequestHandler(ListLikedTweetsController))
 
 export default likesRouter

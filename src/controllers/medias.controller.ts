@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import path from 'path'
-import { UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_DIR } from '~/constants/dir'
+import { UPLOAD_IMAGE_DIR, UPLOAD_IMAGE_TEMP_DIR, UPLOAD_VIDEO_DIR } from '~/constants/dir'
 import { SendFileError } from '~/models/requests/User.request'
 import mediaService from '~/services/medias.services'
 import fs from 'fs'
@@ -27,7 +27,7 @@ export const uploadVideoController = async (req: Request, res: Response, next: N
 export const serveImageController = (req: Request, res: Response) => {
   const { name } = req.params
   console.log('image', name)
-  return res.sendFile(path.resolve(UPLOAD_IMAGE_TEMP_DIR, name as string), (err) => {
+  return res.sendFile(path.resolve(UPLOAD_IMAGE_DIR, name as string), (err) => {
     if (err) {
       const error = err as unknown as SendFileError
       res.status(error.status).json({

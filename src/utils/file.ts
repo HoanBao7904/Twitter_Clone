@@ -54,7 +54,7 @@ export const initFolder = () => {
 // }
 
 export const handleUploadImage = async (req: Request) => {
-  let isErrorEmitted = false
+  // let isErrorEmitted = false
   const validImageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
 
   const form = formidable({
@@ -71,10 +71,10 @@ export const handleUploadImage = async (req: Request) => {
 
       console.log('DEBUG filter:', { name, originalFilename, mimetype, ext, valid })
 
-      if (!valid && !isErrorEmitted) {
-        isErrorEmitted = true
-        form.emit('error', new Error('File type is not valid'))
-      }
+      // if (!valid && !isErrorEmitted) {
+      //   isErrorEmitted = true
+      //   form.emit('error', new Error('File type is not valid'))
+      // }
       return valid
     }
   })

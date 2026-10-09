@@ -10,5 +10,9 @@ declare module 'express' {
     decoded_email_verify_token?: Tokenpayload
     decoded_forgot_passworld_token?: Tokenpayload
     tweet?: Tweet
+    panigation?: {
+      page: number
+      limit: number
+    }
   }
 }

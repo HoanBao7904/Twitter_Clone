@@ -34,16 +34,53 @@ class DatabaseService {
     }
   }
 
-  indexUser() {
-    this.users.createIndex({ email: 1, password: 1 })
-    this.users.createIndex({ email: 1 }, { unique: true })
-    this.users.createIndex({ username: 1 }, { unique: true })
+  async indexUser() {
+    const exists = await this.users.indexExists(['email_1_password_1', 'email_1', 'username_1'])
+
+    if (!exists) {
+      await this.users.createIndex({
+        email: 1,
+        password: 1
+      })
+
+      await this.users.createIndex({ email: 1 }, { unique: true })
+
+      await this.users.createIndex({ username: 1 }, { unique: true })
+    }
+  }
+
+  async indexRefreshTokens() {
+    const exists = await this.refreshtokens.indexExists(['token_1', 'exp_1'])
+
+    if (!exists) {
+      await this.refreshtokens.createIndex({
+        token: 1
+      })
+
+      await this.refreshtokens.createIndex(
+        { exp: 1 },
+        {
+          expireAfterSeconds: 0
+        }
+      )
+    }
+  }
+
+  async indexFollowers() {
+    const exists = await this.follower.indexExists(['user_id_1_followed_user_id_1'])
+    if (!exists) {
+      await this.follower.createIndex({
+        user_id: 1,
+        followed_user_id: 1
+      })
+    }
   }
 
   async indexTweets() {
     const exists = await this.tweets.indexExists('content_text')
+
     if (!exists) {
-      this.tweets.createIndex({ content: 'text' }, { default_language: 'none' })
+      await this.tweets.createIndex({ content: 'text' }, { default_language: 'none' })
     }
   }
 

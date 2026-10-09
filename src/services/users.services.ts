@@ -11,10 +11,8 @@ import { ErrorWithStatus } from '~/models/Errors'
 import { httpStatus } from '~/constants/httpStatus'
 import Follower from '~/models/schemas/Follower.schema'
 import axios from 'axios'
-import { access } from 'fs'
 import { sendForgotPasswordEmail, sendRegisterVerifyEmail } from '~/utils/email'
 import { envConfig } from '~/constants/config'
-import { st } from '@faker-js/faker/dist/core-BMOHu6e5'
 
 dotenv.config()
 class UsersServices {
@@ -167,7 +165,7 @@ class UsersServices {
     }
     const { data } = await axios.post('https://oauth2.googleapis.com/token', body, {
       headers: {
-        'Content-Type': 'application/x-www-from-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
     }) //defaut google requirement
     return data as {

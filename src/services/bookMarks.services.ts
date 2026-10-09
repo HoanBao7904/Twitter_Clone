@@ -41,6 +41,107 @@ class BookMarksService {
     })
     return result
   }
+
+  async ListBookMarkTweets({ user_id, limit, page }: { user_id: string; limit: number; page: number }) {
+    const result = await databaseService.bookmark
+      .aggregate([
+        {
+          $match: {
+            user_id: new ObjectId(user_id)
+          }
+        },
+        {
+          $sort: {
+            created_at: -1
+          }
+        },
+        {
+          $skip: limit * (page - 1)
+        },
+        {
+          $limit: limit
+        },
+        {
+          $lookup: {
+            from: 'tweets',
+            localField: 'tweet_id',
+            foreignField: '_id',
+            as: 'tweets'
+          }
+        },
+        {
+          $unwind: {
+            path: '$tweets',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $match: {
+            $or: [
+              {
+                'tweets.audience': 1
+              },
+              {
+                'tweets.audience': 0
+              }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user_id',
+            foreignField: '_id',
+            as: 'users'
+          }
+        },
+        {
+          $unwind: {
+            path: '$users',
+            preserveNullAndEmptyArrays: false
+          }
+        },
+        {
+          $lookup: {
+            from: 'bookmarks',
+            localField: 'tweets._id',
+            foreignField: 'tweet_id',
+            as: 'tweets_book'
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            liked_at: '$created_at',
+            is_liked: true,
+            tweets: {
+              content: '$tweets.content',
+              type: '$tweets.type',
+              audience: '$tweets.audience',
+              medias: '$tweets.medias',
+              hashtags: '$tweets.hashtags',
+              mentions: '$tweets.mentions',
+              guest_views: '$tweets.guest_views',
+              user_views: '$tweets.user_views',
+              created_at: '$tweets.created_at',
+              author: {
+                _id: '$users._id',
+                name: '$users.name',
+                username: '$users.username',
+                avatar: '$users.avatar'
+              },
+              like_count: {
+                $size: '$tweets_book'
+              }
+            }
+          }
+        }
+      ])
+      .toArray()
+
+    const total = await databaseService.bookmark.countDocuments({ user_id: new ObjectId(user_id) })
+    return { result, total }
+  }
 }
 
 const bookMarksService = new BookMarksService()

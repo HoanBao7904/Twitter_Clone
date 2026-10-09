@@ -1,10 +1,5 @@
-import jwt, { JwtPayload } from 'jsonwebtoken'
-import dotenv from 'dotenv'
-import { error } from 'console'
-import { reject } from 'lodash'
-import { resolve } from 'path'
+import jwt, { SignOptions } from 'jsonwebtoken'
 import { Tokenpayload } from '~/models/requests/User.request'
-dotenv.config()
 
 export const SignToken = ({
   payload,
@@ -15,7 +10,7 @@ export const SignToken = ({
 }: {
   payload: string | Buffer | object
   privateKey: string
-  options?: jwt.SignOptions
+  options?: SignOptions
 }) => {
   return new Promise<string>((resolve, reject) => {
     jwt.sign(payload, privateKey, options, (err, token) => {
@@ -24,6 +19,8 @@ export const SignToken = ({
     })
   })
 }
+
+// const a = jwt.verify()
 
 export const verifyToken = ({ token, secretOrPublickey }: { token: string; secretOrPublickey: string }) => {
   return new Promise<Tokenpayload>((resolve, reject) => {

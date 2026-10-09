@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
   bookMarkTweetController,
+  ListBookMarkTweetsController,
   unbookMarkTweetByBorkMarkIdController,
   unbookMarkTweetController
 } from '~/controllers/bookMarks.controller'
@@ -53,5 +54,19 @@ bookMarksRouter.delete(
   accessTokenValidator,
   verifyUserValidator,
   wrapRequestHandler(unbookMarkTweetByBorkMarkIdController)
+)
+
+/**
+ * Description: history of bookmarked tweets
+ * path: /history
+ * method: GET
+ * header :{Authorization: Bearer <access_token>}
+ */
+
+bookMarksRouter.get(
+  '/history',
+  accessTokenValidator,
+  verifyUserValidator,
+  wrapRequestHandler(ListBookMarkTweetsController)
 )
 export default bookMarksRouter

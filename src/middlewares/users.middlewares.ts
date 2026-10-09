@@ -144,16 +144,17 @@ export const loginValidator = validate(
         },
         trim: true,
         custom: {
-          options: async (value, { req }) => {
+          options: async (value, meta) => {
             const user = await databaseService.users.findOne({
               email: value,
-              password: HashPassword(req.body.password)
+              // password: HashPassword(req.body.password)
+              password: HashPassword(meta.req.body.password)
             })
             if (!user) {
               // user === null
               throw new Error('email hoặc passworld đã sai')
             }
-            req.user = user
+            meta.req.user = user
             return true
           }
         }

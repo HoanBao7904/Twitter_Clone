@@ -27,8 +27,8 @@ export const loginController = async (req: Request<ParamsDictionary, any, Logout
   // throw new Error('looix')
   const user = req.user as User
   // console.log(user)
-  const user__id = user._id as ObjectId
-  const result = await usersServices.loginUser({ user_id: user__id.toString(), verify: user.verify })
+  const user_id = user._id as ObjectId
+  const result = await usersServices.loginUser({ user_id: user_id.toString(), verify: user.verify })
   res.json({
     message: 'login success',
     result

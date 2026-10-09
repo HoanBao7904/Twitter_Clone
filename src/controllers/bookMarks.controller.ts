@@ -35,3 +35,18 @@ export const unbookMarkTweetByBorkMarkIdController = async (req: Request, res: R
     result: result
   })
 }
+
+export const ListBookMarkTweetsController = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const limit = Number(req.query.limit)
+  const page = Number(req.query.page)
+  const { result, total } = await bookMarksService.ListBookMarkTweets({ user_id, limit, page })
+  return res.json({
+    message: 'Lấy danh sách tweet đã bookmark thành công',
+    result: result,
+    total: total,
+    limit: limit,
+    page: page,
+    total_page: Math.ceil(total / limit)
+  })
+}

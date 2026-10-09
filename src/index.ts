@@ -16,7 +16,6 @@ import helmet from 'helmet'
 import { createServer } from 'http'
 import converSationsRouter from './routes/conversations.route'
 import initSocket from './utils/socket'
-import YAML from 'yaml'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
 import { envConfig, isProduction } from './constants/config'
@@ -26,6 +25,8 @@ import searchRouter from './routes/searchs.route'
 databaService.connect().then(() => {
   databaService.indexTweets()
   databaService.indexUser()
+  databaService.indexFollowers()
+  databaService.indexRefreshTokens()
 })
 
 // import fs from 'fs'
