@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb'
 import { TweetAudience, TweetType } from '~/constants/enums'
 import { Media } from '../Orther'
 
-interface TwitterConStructer {
+export interface TwitterConStructer {
   _id?: ObjectId
   user_id: ObjectId
   type: TweetType

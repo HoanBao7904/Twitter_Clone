@@ -1,24 +1,41 @@
 import LikeTweet from '~/models/schemas/Like.schema'
 import databaseService from './database.services'
 import { ObjectId } from 'mongodb'
-import { TweetAudience } from '~/constants/enums'
+import { NotificationType, TweetAudience } from '~/constants/enums'
+import notificationsService from './notifications.services'
+import Notification from '~/models/schemas/Notification.schema'
 
 class LikesService {
   async LikeTweet(tweet_id: string, user_id: string) {
-    const result = await databaseService.like.findOneAndUpdate(
-      {
+    // 1. CHECK XEM ĐÃ LIKE CHƯA (Để tránh spam thông báo & lỗi DB)
+    const existingLike = await databaseService.like.findOne({
+      user_id: new ObjectId(user_id),
+      tweet_id: new ObjectId(tweet_id)
+    })
+    if (existingLike) {
+      return existingLike
+    }
+
+    const newLike = await databaseService.like.insertOne(
+      new LikeTweet({
         user_id: new ObjectId(user_id),
         tweet_id: new ObjectId(tweet_id)
-      },
-      {
-        $setOnInsert: new LikeTweet({ user_id: new ObjectId(user_id), tweet_id: new ObjectId(tweet_id) })
-      },
-      {
-        upsert: true,
-        returnDocument: 'after'
-      }
+      })
     )
-    return result
+    const tweet = await databaseService.tweets.findOne({ _id: new ObjectId(tweet_id) })
+
+    // nếu tweet tồn tại và người like không phải là chủ sở hữu tweet thì mới tạo thông báo
+    if (tweet && tweet.user_id.toString() !== user_id) {
+      await databaseService.notification.insertOne(
+        new Notification({
+          sender_id: new ObjectId(user_id),
+          receiver_id: new ObjectId(tweet.user_id),
+          type: NotificationType.LIKE,
+          tweet_id: new ObjectId(tweet_id)
+        })
+      )
+    }
+    return newLike
   }
 
   async unLikeTweet(tweet_id: string, user_id: string) {
@@ -44,12 +61,6 @@ class LikesService {
             }
           },
           {
-            $skip: limit * (page - 1)
-          },
-          {
-            $limit: limit
-          },
-          {
             $lookup: {
               from: 'tweets',
               localField: 'tweet_id',
@@ -59,68 +70,46 @@ class LikesService {
           },
           {
             $unwind: {
-              path: '$tweets',
-              preserveNullAndEmptyArrays: true
+              path: '$tweets'
             }
           },
           {
+            //trường hợp lọc để chông một số tweet để chỉ mình tôi hoặc xóa bài tweet đó
             $match: {
-              $or: [
-                {
-                  'tweets.audience': TweetAudience.TwitterCircle
-                },
-                {
-                  'tweets.audience': TweetAudience.Everyone
-                }
-              ]
+              'tweets.audience': {
+                $in: [TweetAudience.Everyone, TweetAudience.TwitterCircle]
+              }
             }
           },
           {
             $lookup: {
               from: 'users',
-              localField: 'user_id',
+              localField: 'tweets.user_id',
               foreignField: '_id',
               as: 'author'
             }
           },
           {
             $unwind: {
-              path: '$author',
-              preserveNullAndEmptyArrays: true
+              path: '$author'
             }
           },
           {
-            $lookup: {
-              from: 'likes',
-              localField: 'tweets._id',
-              foreignField: 'tweet_id',
-              as: 'tweets_like'
-            }
+            $limit: limit
+          },
+          {
+            $skip: limit * (page - 1)
           },
           {
             $project: {
               _id: 0,
-              liked_at: '$created_at',
-              is_liked: true,
-              tweets: {
-                content: '$tweets.content',
-                type: '$tweets.type',
-                audience: '$tweets.audience',
-                medias: '$tweets.medias',
-                hashtags: '$tweets.hashtags',
-                mentions: '$tweets.mentions',
-                guest_views: '$tweets.guest_views',
-                user_views: '$tweets.user_views',
-                created_at: '$tweets.created_at',
-                author: {
-                  _id: '$author._id',
-                  name: '$author.name',
-                  username: '$author.username',
-                  avatar: '$author.avatar'
-                },
-                like_count: {
-                  $size: '$tweets_like'
-                }
+              bookmarked_at: '$created_at',
+              tweets: 1,
+              author: {
+                _id: '$author._id',
+                name: '$author.name',
+                username: '$author.username',
+                avatar: '$author.avatar'
               }
             }
           }

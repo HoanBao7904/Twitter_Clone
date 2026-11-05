@@ -15,7 +15,8 @@ import {
   FollowController,
   unFollowController,
   changePasswordController,
-  oauthController
+  oauthController,
+  randomListsController
 } from '~/controllers/users.controller'
 import { filterMiddleware } from '~/middlewares/common.middleware'
 import {
@@ -188,6 +189,14 @@ useRoutes.post('/reset-password', resetPasswordValidator, wrapRequestHandler(res
  */
 
 useRoutes.get('/me', accessTokenValidator, wrapRequestHandler(getMeController))
+/**
+ * Description: ramdom lists of users
+ * path: /connect_users
+ * method: GET
+ * header :{Authorization: Bearer <access_token>}
+ */
+
+useRoutes.get('/connect/users', accessTokenValidator, verifyUserValidator, wrapRequestHandler(randomListsController))
 
 /**
  * Description: update me profile
@@ -195,6 +204,8 @@ useRoutes.get('/me', accessTokenValidator, wrapRequestHandler(getMeController))
  * method: PATCH
  * header:{Authorization: Bearer <access_token>}
  * body: {userschema}
+ *
+ *
  */
 //method patch khác post chỗ path là khi một form bạn thay đổi cái input nào thì gửi cái đó thôi,
 // còn post thì gửi form thì gửi hết các thông tin

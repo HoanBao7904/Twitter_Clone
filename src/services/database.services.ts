@@ -9,6 +9,7 @@ import BookMark from '~/models/schemas/BookMark.schema'
 import Like from '~/models/schemas/Like.schema'
 import Conversation from '~/models/schemas/Conversation.schema'
 import { envConfig } from '~/constants/config'
+import Notification from '~/models/schemas/Notification.schema'
 // dotenv.config()
 // console.log(process.env.DB_USERNAME)
 // console.log(process.env.DB_PASSWORD)
@@ -113,6 +114,10 @@ class DatabaseService {
 
   get converSation(): Collection<Conversation> {
     return this.db.collection(envConfig.dbConversationCollection)
+  }
+
+  get notification(): Collection<Notification> {
+    return this.db.collection(envConfig.dbNotificationCollection)
   }
 }
 

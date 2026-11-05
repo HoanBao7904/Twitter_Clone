@@ -51,8 +51,6 @@ const initSocket = (httpServer: httpServer) => {
   })
 
   io.on('connection', (socket) => {
-    console.log('SOCKET CONNECTED:', socket.id)
-    console.log('socket.auth = ', socket.handshake.auth)
     const { user_id } = socket.handshake.auth.decoded_authorization
 
     users[user_id] = {

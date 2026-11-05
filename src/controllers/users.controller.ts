@@ -223,3 +223,17 @@ export const changePasswordController = async (
   const result = await usersServices.ChangePassword(user_id, password)
   res.json(result)
 }
+
+export const randomListsController = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  //lấy danh sách những người mà user đang follow
+  const follows = await databaseService.follower.find({ user_id: new ObjectId(user_id) }).toArray()
+  //lấy danh sách những người mà user đang follow
+  const excludedUserIds = follows.map((follower) => follower.followed_user_id)
+  const randomUsers = await usersServices.ramDomListUsers(excludedUserIds)
+
+  return res.json({
+    message: 'success',
+    data: randomUsers
+  })
+}

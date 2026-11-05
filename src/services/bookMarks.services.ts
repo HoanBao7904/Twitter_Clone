@@ -1,28 +1,40 @@
 import { ObjectId } from 'mongodb'
 import databaseService from './database.services'
 import BookMark from '~/models/schemas/BookMark.schema'
+import { NotificationType, TweetAudience } from '~/constants/enums'
+import Notification from '~/models/schemas/Notification.schema'
 
 class BookMarksService {
   async bookMarkTweet(tweet_id: string, user_id: string) {
-    //kiểm tra nếu có thì lấy , ko có thì tạo
-    const result = await databaseService.bookmark.findOneAndUpdate(
-      {
+    // 1. CHECK XEM ĐÃ BOOKMARK CHƯA (Để tránh spam thông báo & lỗi DB)
+    const existingBookmark = await databaseService.bookmark.findOne({
+      user_id: new ObjectId(user_id),
+      tweet_id: new ObjectId(tweet_id)
+    })
+    if (existingBookmark) {
+      return existingBookmark
+    }
+
+    const newBookmark = await databaseService.bookmark.insertOne(
+      new BookMark({
         user_id: new ObjectId(user_id),
         tweet_id: new ObjectId(tweet_id)
-      },
-      {
-        $setOnInsert: new BookMark({ user_id: new ObjectId(user_id), tweet_id: new ObjectId(tweet_id) })
-      },
-      {
-        upsert: true,
-        returnDocument: 'after'
-      }
-      // new BookMark({
-      //   user_id: new ObjectId(user_id),
-      //   tweet_id: new ObjectId(tweet_id)
-      // })
+      })
     )
-    return result
+    const tweet = await databaseService.tweets.findOne({ _id: new ObjectId(tweet_id) })
+
+    // nếu tweet tồn tại và người like không phải là chủ sở hữu tweet thì mới tạo thông báo
+    if (tweet && tweet.user_id.toString() !== user_id) {
+      await databaseService.notification.insertOne(
+        new Notification({
+          sender_id: new ObjectId(user_id),
+          receiver_id: new ObjectId(tweet.user_id),
+          type: NotificationType.BOOKMARK,
+          tweet_id: new ObjectId(tweet_id)
+        })
+      )
+    }
+    return newBookmark
   }
 
   async unbookMarkTweet(tweet_id: string, user_id: string) {
@@ -57,12 +69,6 @@ class BookMarksService {
             }
           },
           {
-            $skip: limit * (page - 1)
-          },
-          {
-            $limit: limit
-          },
-          {
             $lookup: {
               from: 'tweets',
               localField: 'tweet_id',
@@ -72,73 +78,52 @@ class BookMarksService {
           },
           {
             $unwind: {
-              path: '$tweets',
-              preserveNullAndEmptyArrays: true
+              path: '$tweets'
             }
           },
           {
+            //trường hợp lọc để chông một số tweet để chỉ mình tôi hoặc xóa bài tweet đó
             $match: {
-              $or: [
-                {
-                  'tweets.audience': 1
-                },
-                {
-                  'tweets.audience': 0
-                }
-              ]
+              'tweets.audience': {
+                $in: [TweetAudience.Everyone, TweetAudience.TwitterCircle]
+              }
             }
           },
           {
             $lookup: {
               from: 'users',
-              localField: 'user_id',
+              localField: 'tweets.user_id',
               foreignField: '_id',
-              as: 'users'
+              as: 'author'
             }
           },
           {
             $unwind: {
-              path: '$users',
-              preserveNullAndEmptyArrays: false
+              path: '$author'
             }
           },
           {
-            $lookup: {
-              from: 'bookmarks',
-              localField: 'tweets._id',
-              foreignField: 'tweet_id',
-              as: 'tweets_book'
-            }
+            $limit: limit
+          },
+          {
+            $skip: limit * (page - 1)
           },
           {
             $project: {
               _id: 0,
-              liked_at: '$created_at',
-              is_liked: true,
-              tweets: {
-                content: '$tweets.content',
-                type: '$tweets.type',
-                audience: '$tweets.audience',
-                medias: '$tweets.medias',
-                hashtags: '$tweets.hashtags',
-                mentions: '$tweets.mentions',
-                guest_views: '$tweets.guest_views',
-                user_views: '$tweets.user_views',
-                created_at: '$tweets.created_at',
-                author: {
-                  _id: '$users._id',
-                  name: '$users.name',
-                  username: '$users.username',
-                  avatar: '$users.avatar'
-                },
-                like_count: {
-                  $size: '$tweets_book'
-                }
+              bookmarked_at: '$created_at',
+              tweets: 1,
+              author: {
+                _id: '$author._id',
+                name: '$author.name',
+                username: '$author.username',
+                avatar: '$author.avatar'
               }
             }
           }
         ])
         .toArray(),
+      // đếm tổng số lượng tweet đã bookmark
       databaseService.bookmark.countDocuments({ user_id: new ObjectId(user_id) })
     ])
     return { result, total }

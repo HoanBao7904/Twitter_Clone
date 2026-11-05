@@ -504,6 +504,17 @@ class UsersServices {
       // changePass
     }
   }
+
+  async ramDomListUsers(excludedUserIds: ObjectId[]) {
+    const randomUsers = await databaseService.users
+      .aggregate([
+        { $match: { _id: { $nin: excludedUserIds } } },
+        { $sample: { size: 50 } },
+        { $project: { password: 0, email_verify_token: 0, forgot_password_token: 0 } }
+      ])
+      .toArray()
+    return randomUsers
+  }
 }
 
 const usersServices = new UsersServices()
