@@ -9,6 +9,7 @@ import {
   audienceValidator,
   createtweetValidator,
   getTweetChildrenValidator,
+  panigationValidator,
   tweetIdvalidator
 } from '~/middlewares/tweets.middleware'
 import { accessTokenValidator, isUserLoggedInValidator, verifyUserValidator } from '~/middlewares/users.middlewares'
@@ -24,7 +25,13 @@ const tweetRoutes = Router()
  * Query:{limit:number, page:number}
  */
 
-tweetRoutes.get('/newsfeed', accessTokenValidator, wrapRequestHandler(getNewsfeedController))
+tweetRoutes.get(
+  '/newsfeed',
+  isUserLoggedInValidator(accessTokenValidator),
+  panigationValidator,
+  verifyUserValidator,
+  wrapRequestHandler(getNewsfeedController)
+)
 /**
  * Description: post Tweet
  * path: /

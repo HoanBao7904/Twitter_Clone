@@ -1,7 +1,7 @@
 import { TweetRequestBody } from '~/models/requests/Tweet.request'
 import databaseService from './database.services'
 import Tweet from '~/models/schemas/Twitter.schema'
-import { ObjectId, WithId } from 'mongodb'
+import { Document, ObjectId, WithId } from 'mongodb'
 import HashTag from '~/models/schemas/Hashtag.schema'
 import { TweetAudience, TweetType } from '~/constants/enums'
 class TweetsService {
@@ -198,6 +198,7 @@ class TweetsService {
         }
       ])
       .toArray()
+
     const ids = tweetsComent.map((tweet) => tweet._id as ObjectId)
     const inc = user_id ? { user_views: 1 } : { guest_views: 1 }
     const [, total] = await Promise.all([
@@ -208,7 +209,7 @@ class TweetsService {
           }
         },
         {
-          $inc: inc,
+          $inc: inc, // tăng view
           $set: {
             updated_at: new Date()
           }
@@ -233,7 +234,7 @@ class TweetsService {
     return { tweetsComent, total }
   }
 
-  async getTrendingTweets(limit: number) {
+  async getTrendingRandomTweets(limit: number, page: number) {
     // lấy tweets từ 30 ngày trước
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 30)
@@ -316,7 +317,12 @@ class TweetsService {
           $sort: { trending_score: -1, created_at: -1 }
         },
         // 7. Phân trang & Lấy tác giả
-        { $limit: limit },
+        {
+          $skip: limit * (page - 1)
+        },
+        {
+          $limit: limit
+        },
         {
           $lookup: {
             from: 'users',
@@ -348,41 +354,55 @@ class TweetsService {
   async getnewFeeds({ user_id, page, limit }: { user_id: string; page: number; limit: number }) {
     const user_id_obj = new ObjectId(user_id)
 
+    // 1. Lấy danh sách những người mình đang follow
     const followed_users = await databaseService.follower
       .find({ user_id: user_id_obj }, { projection: { followed_user_id: 1, _id: 0 } })
       .toArray()
 
-    // NHÁNH 1: NẾU CHƯA FOLLOW AI
-    if (followed_users.length === 0) {
-      // SỬA LỖI 3: Phải lấy đủ số bài cho trang hiện tại (page * limit)
-      const trendingTweets = await this.getTrendingTweets(limit * page)
+    // Hàm phụ trợ để tăng view hàng loạt và cập nhật data trả về
+    const handleTweetsViews = async (tweets: Document[]) => {
+      if (tweets.length === 0) return
+      const ids = tweets.map((tweet) => tweet._id as ObjectId)
 
-      const startIndex = (page - 1) * limit
-      const paginatedTweets = trendingTweets.slice(startIndex, startIndex + limit)
-
-      await Promise.all(
-        paginatedTweets.map(async (tweet) => {
-          const updatedView = await this.increaseView(tweet._id.toString(), user_id)
-          tweet.user_views = updatedView.user_views
-          tweet.guest_views = updatedView.guest_views
-          tweet.updated_at = updatedView.updated_at
-        })
+      await databaseService.tweets.updateMany(
+        //nếu tweets có id nào trong ids thì tăng view và cập nhật updated_at
+        { _id: { $in: ids } },
+        { $inc: { user_views: 1 }, $set: { updated_at: new Date() } }
       )
 
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 30)
+      // Vì updateMany không trả về data mới, ta phải tự cộng view vào object để trả về Frontend
+      tweets.forEach((tweet) => {
+        tweet.user_views += 1
+        tweet.updated_at = new Date()
+      })
+    }
+
+    // ==========================================
+    // NHÁNH 1: NẾU CHƯA FOLLOW AI (TRENDING)
+    // ==========================================
+    if (followed_users.length === 0) {
+      // Lấy danh sách trending (hàm này đã có $skip và $limit bên trong)
+      const trendingTweets = await this.getTrendingRandomTweets(limit, page)
+
+      // Tăng view hàng loạt
+      await handleTweetsViews(trendingTweets)
+
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
       const total = await databaseService.tweets.countDocuments({
         audience: TweetAudience.Everyone,
-        created_at: { $gte: sevenDaysAgo }
+        created_at: { $gte: thirtyDaysAgo }
       })
 
-      return { tweets: paginatedTweets, total }
+      return { tweets: trendingTweets, total }
     }
 
-    // NHÁNH 2: NẾU ĐÃ FOLLOW
+    // ==========================================
+    // NHÁNH 2: NẾU ĐÃ FOLLOW AI (FEED BÌNH THƯỜNG)
+    // ==========================================
     const ids = followed_users.map((item) => item.followed_user_id)
-    ids.push(user_id_obj)
+    ids.push(user_id_obj) // Thêm chính mình vào
 
     const matchStage = { user_id: { $in: ids } }
     const audienceStage = {
@@ -466,7 +486,6 @@ class TweetsService {
               }
             }
           },
-
           {
             $project: {
               tweet_children: 0,
@@ -481,29 +500,26 @@ class TweetsService {
         ])
         .toArray(),
 
+      // Đếm tổng số bài
       databaseService.tweets
         .aggregate([
           { $match: matchStage },
           { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' } },
           { $unwind: { path: '$user' } },
           audienceStage,
-          { $count: 'total' }
+          { $count: 'total' } // đếm kết quả trả về và đặt tên trường là total
         ])
         .toArray()
+      // kết quả trả về [ { total: 3 } ]
     ])
 
-    await Promise.all(
-      tweets.map(async (tweet) => {
-        const updatedView = await this.increaseView(tweet._id.toString(), user_id)
-        tweet.user_views = updatedView.user_views
-        tweet.guest_views = updatedView.guest_views
-        tweet.updated_at = updatedView.updated_at
-      })
-    )
+    // Tăng view hàng loạt cho nhánh 2
+    await handleTweetsViews(tweets)
 
     return {
       tweets,
       total: totalResult[0]?.total || 0
+      //// kết quả trả về [ { total: 3 } ] nên
     }
   }
 }

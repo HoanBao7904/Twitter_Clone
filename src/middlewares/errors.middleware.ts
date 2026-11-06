@@ -18,18 +18,6 @@ function safeStringify(obj: any) {
 
 export const defaultErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   try {
-    //     if (err instanceof ErrorWithStatus) {
-    //   res.status(err.status || httpStatus.INTERNAL_SERVER_EROR).json(omit(err, ['status']))
-    // }
-
-    // Object.getOwnPropertyNames(err).forEach((key) => {
-    //   Object.defineProperty(err, key, { enumerable: true })
-    // })
-
-    // res.status(httpStatus.INTERNAL_SERVER_EROR).json({
-    //   message: err.message,
-    //   errorInfo: safeStringify(omit(err, ['stack']))
-    // })
     if (err instanceof ErrorWithStatus) {
       res.status(err.status || httpStatus.INTERNAL_SERVER_EROR).json(omit(err, ['status']))
     }
