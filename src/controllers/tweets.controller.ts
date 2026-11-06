@@ -54,21 +54,21 @@ export const getTweetChirldrenController = async (req: Request, res: Response) =
   })
 }
 
-// export const getNewFeedController = async (
-//   req: Request<ParamsDictionary, any, any, PaginationQuery>,
-//   res: Response
-// ) => {
-//   const user_id = req.decoded_authorization?.user_id as string
-//   const page = Number(req.query.page)
-//   const limit = Number(req.query.limit)
-//   const result = await tweetsServices.getnewFeeds({ user_id, page, limit })
-//   return res.json({
-//     message: 'Get new feed SuccessFully',
-//     result: {
-//       tweets: result.tweets,
-//       limit,
-//       page,
-//       total_page: Math.ceil(result.total / limit)
-//     }
-//   })
-// }
+export const getNewsfeedController = async (req: Request<any, any, any, PaginationQuery>, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const limit = Number(req.query.limit) || 10
+  const page = Number(req.query.page) || 1
+
+  const result = await tweetsServices.getnewFeeds({ user_id, page, limit })
+
+  return res.json({
+    message: 'Get new feed SuccessFully',
+    result: {
+      tweets: result.tweets,
+      limit: limit,
+      page: page,
+      total: result.total,
+      total_page: Math.ceil(result.total / limit) // Tính tổng số trang
+    }
+  })
+}

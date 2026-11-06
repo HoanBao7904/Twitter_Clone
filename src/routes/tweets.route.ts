@@ -1,5 +1,10 @@
 import { Router } from 'express'
-import { createtweetController, getTweetChirldrenController, getTweetController } from '~/controllers/tweets.controller'
+import {
+  createtweetController,
+  getNewsfeedController,
+  getTweetChirldrenController,
+  getTweetController
+} from '~/controllers/tweets.controller'
 import {
   audienceValidator,
   createtweetValidator,
@@ -10,6 +15,16 @@ import { accessTokenValidator, isUserLoggedInValidator, verifyUserValidator } fr
 import { wrapRequestHandler } from '~/utils/handlers'
 
 const tweetRoutes = Router()
+
+/**
+ * Description: get new feeds
+ * path: /
+ * method: GET
+ * header :{Authorization: Bearer <access_token>}
+ * Query:{limit:number, page:number}
+ */
+
+tweetRoutes.get('/newsfeed', accessTokenValidator, wrapRequestHandler(getNewsfeedController))
 /**
  * Description: post Tweet
  * path: /
@@ -60,21 +75,5 @@ tweetRoutes.get(
   audienceValidator,
   wrapRequestHandler(getTweetChirldrenController)
 )
-
-/**
- * Description: get new feeds
- * path: /
- * method: GET
- * header :{Authorization: Bearer <access_token>}
- * Query:{limit:number, page:number}
- */
-
-// tweetRoutes.get(
-//   '/',
-//   panigationValidator,
-//   accessTokenValidator,
-//   verifyUserValidator,
-//   wrapRequestHandler(getNewFeedController)
-// )
 
 export default tweetRoutes
