@@ -36,8 +36,8 @@ export const ListLikedTweetsController = async (req: Request<any, any, any, Pagi
       tweets: result,
       limit,
       page,
-      total_page: Math.ceil(total / limit),
-      total
+      total,
+      total_page: Math.ceil(total / limit)
     }
   })
 }

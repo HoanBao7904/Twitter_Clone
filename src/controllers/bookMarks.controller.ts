@@ -44,9 +44,9 @@ export const ListBookMarkTweetsController = async (req: Request, res: Response) 
   return res.json({
     message: 'Lấy danh sách tweet đã bookmark thành công',
     result: result,
-    total: total,
-    limit: limit,
     page: page,
+    limit: limit,
+    total: total,
     total_page: Math.ceil(total / limit)
   })
 }

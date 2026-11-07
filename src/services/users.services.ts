@@ -515,6 +515,78 @@ class UsersServices {
       .toArray()
     return randomUsers
   }
+
+  async followingService(user_id: string) {
+    return databaseService.follower
+      .aggregate([
+        {
+          $match: {
+            user_id: new ObjectId(user_id)
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'followed_user_id',
+            foreignField: '_id',
+            as: 'following'
+          }
+        },
+        {
+          $unwind: {
+            path: '$following'
+          }
+        },
+        {
+          $project: {
+            following: {
+              name: '$following.name',
+              username: '$following.username',
+              bio: '$following.bio',
+              avatar: '$following.avatar'
+            },
+            _id: 0
+          }
+        }
+      ])
+      .toArray()
+  }
+
+  async followerService(user_id: string) {
+    return databaseService.follower
+      .aggregate([
+        {
+          $match: {
+            followed_user_id: new ObjectId(user_id)
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'followed_user_id',
+            foreignField: '_id',
+            as: 'following'
+          }
+        },
+        {
+          $unwind: {
+            path: '$following'
+          }
+        },
+        {
+          $project: {
+            following: {
+              name: '$following.name',
+              username: '$following.username',
+              bio: '$following.bio',
+              avatar: '$following.avatar'
+            },
+            _id: 0
+          }
+        }
+      ])
+      .toArray()
+  }
 }
 
 const usersServices = new UsersServices()

@@ -16,7 +16,9 @@ import {
   unFollowController,
   changePasswordController,
   oauthController,
-  randomListsController
+  randomListsController,
+  followingController,
+  fololowerController
 } from '~/controllers/users.controller'
 import { filterMiddleware } from '~/middlewares/common.middleware'
 import {
@@ -227,28 +229,46 @@ useRoutes.patch(
   wrapRequestHandler(updateMeController)
 )
 
-/**
- * Description: get user profile
- * path: /:username (:username thi key la username, neu :hahaha thi key la hahaha)
- * method: GET
- */
-
-useRoutes.get('/:username', wrapRequestHandler(getProfileController))
-
-/**
- * Description: follow user
- * path: /follow
- * method: POST
- * header:{Authorization: Bearer <access_token>}
- * body: {follwer_user_id: strig}
- */
-
 useRoutes.post(
   '/follow',
   accessTokenValidator,
   verifyUserValidator,
   followValidator,
   wrapRequestHandler(FollowController)
+)
+
+/**
+ * Description: Lấy danh sách người mình đã theo dõi
+ * path: /listFololowing
+ * method: GET
+ * header:{Authorization: Bearer <access_token>}
+ */
+
+useRoutes.get('/listFollowing', accessTokenValidator, verifyUserValidator, wrapRequestHandler(followingController))
+
+/**
+ * Description: Lấy danh sách  đã theo dõi tôi
+ * path: /listFololower
+ * method: GET
+ * header:{Authorization: Bearer <access_token>}
+ */
+
+useRoutes.get('/listFollower', accessTokenValidator, verifyUserValidator, wrapRequestHandler(fololowerController))
+
+/**
+ * Description: change Password
+ * path: /change-password
+ * method: PUT
+ * header:{Authorization: Bearer <access_token>}
+ * body: { old_password: string, password: string, confirm_password: string}
+ */
+
+useRoutes.put(
+  '/change-password',
+  accessTokenValidator,
+  verifyUserValidator,
+  changePasswordvalidator,
+  wrapRequestHandler(changePasswordController)
 )
 
 /**
@@ -268,19 +288,11 @@ useRoutes.delete(
 )
 
 /**
- * Description: change Password
- * path: /change-password
- * method: PUT
- * header:{Authorization: Bearer <access_token>}
- * body: { old_password: string, password: string, confirm_password: string}
+ * Description: get user profile
+ * path: /:username (:username thi key la username, neu :hahaha thi key la hahaha)
+ * method: GET
  */
 
-useRoutes.put(
-  '/change-password',
-  accessTokenValidator,
-  verifyUserValidator,
-  changePasswordvalidator,
-  wrapRequestHandler(changePasswordController)
-)
+useRoutes.get('/:username', wrapRequestHandler(getProfileController))
 
 export default useRoutes

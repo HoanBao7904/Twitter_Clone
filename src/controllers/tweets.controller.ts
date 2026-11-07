@@ -50,6 +50,7 @@ export const getTweetChirldrenController = async (req: Request, res: Response) =
     tweets: tweetsComent,
     page: page,
     limit: limit,
+    total: total,
     total_page: Math.ceil(total / limit)
   })
 }

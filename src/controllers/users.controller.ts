@@ -237,3 +237,21 @@ export const randomListsController = async (req: Request, res: Response) => {
     data: randomUsers
   })
 }
+
+export const followingController = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const result = await usersServices.followingService(user_id)
+  return res.json({
+    message: 'Lấy danh sách following thành công',
+    result
+  })
+}
+
+export const fololowerController = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const result = await usersServices.followerService(user_id)
+  return res.json({
+    message: 'Lấy danh sách follower thành công',
+    result
+  })
+}

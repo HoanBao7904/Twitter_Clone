@@ -7,17 +7,6 @@ export const getNotificationsController = async (req: Request<any, any, any, Pag
   const { user_id } = req.decoded_authorization as Tokenpayload
   const limit = Number(req.query.limit) || 10
   const page = Number(req.query.page) || 1
-  const { result, total, unread } = await notificationsService.list({ user_id, page, limit })
-  return res.json({
-    message: 'Get notifications successfully',
-    result: { notifications: result, limit, page, total_page: Math.ceil(total / limit), unread }
-  })
-}
-
-export const getNotificationsController111 = async (req: Request<any, any, any, PaginationQuery>, res: Response) => {
-  const { user_id } = req.decoded_authorization as Tokenpayload
-  const limit = Number(req.query.limit) || 10
-  const page = Number(req.query.page) || 1
   const { result, total } = await notificationsService.getNotifications({ user_id, page, limit })
   return res.json({
     message: 'Get notifications successfully',
@@ -30,20 +19,12 @@ export const getNotificationsController111 = async (req: Request<any, any, any, 
   })
 }
 
-export const unreadCountController = async (req: Request, res: Response) => {
+export const readNotificationsController = async (req: Request<{ notification_id: string }>, res: Response) => {
   const { user_id } = req.decoded_authorization as Tokenpayload
-  const count = await notificationsService.unreadCount(user_id)
-  return res.json({ message: 'Get unread count successfully', result: { unread: count } })
-}
-
-export const markReadController = async (req: Request<{ notification_id: string }>, res: Response) => {
-  const { user_id } = req.decoded_authorization as Tokenpayload
-  const result = await notificationsService.markRead(user_id, req.params.notification_id)
-  return res.json(result)
-}
-
-export const markAllReadController = async (req: Request, res: Response) => {
-  const { user_id } = req.decoded_authorization as Tokenpayload
-  const result = await notificationsService.markAllRead(user_id)
-  return res.json(result)
+  const { _id } = req.body
+  const result = await notificationsService.readNotificationService(user_id, _id)
+  return res.json({
+    message: 'Đọc thông báo thành công',
+    result
+  })
 }
