@@ -264,3 +264,12 @@ export const addFriendController = async (req: Request, res: Response) => {
     message: result
   })
 }
+
+export const UnFriendController = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const { followed_user_id } = req.body
+  const result = await usersServices.unUserInCircle(user_id, followed_user_id)
+  return res.json({
+    message: result
+  })
+}

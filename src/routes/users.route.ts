@@ -19,7 +19,8 @@ import {
   randomListsController,
   followingController,
   fololowerController,
-  addFriendController
+  addFriendController,
+  UnFriendController
 } from '~/controllers/users.controller'
 import { filterMiddleware } from '~/middlewares/common.middleware'
 import {
@@ -265,6 +266,16 @@ useRoutes.get('/listFollower', accessTokenValidator, verifyUserValidator, wrapRe
  */
 
 useRoutes.post('/addFriend', accessTokenValidator, verifyUserValidator, wrapRequestHandler(addFriendController))
+
+/**
+ * Description: Hủy bạn thân
+ * path: /UnFriend
+ * method: DELETE
+ * header:{Authorization: Bearer <access_token>}
+ * body : {user_id}
+ */
+
+useRoutes.put('/UnFriend', accessTokenValidator, verifyUserValidator, wrapRequestHandler(UnFriendController))
 
 /**
  * Description: change Password

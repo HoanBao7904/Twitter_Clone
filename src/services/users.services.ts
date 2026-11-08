@@ -614,6 +614,28 @@ class UsersServices {
 
     return 'Thêm vào bạn thân thành công'
   }
+
+  async unUserInCircle(user_id: string, followed_user_id: string) {
+    //check xem có phải là bạn thân không
+    const user = await databaseService.users.findOne({
+      _id: new ObjectId(user_id),
+      twitter_circle: new ObjectId(followed_user_id)
+    })
+
+    if (!user) {
+      throw new ErrorWithStatus({
+        message: 'Người dùng này không phải là bạn thân',
+        status: 400
+      })
+    }
+    await databaseService.users.updateOne(
+      {
+        _id: new ObjectId(user_id)
+      },
+      { $pull: { twitter_circle: new ObjectId(followed_user_id) } }
+    )
+    return 'Xóa khỏi bạn thân thành công'
+  }
 }
 
 const usersServices = new UsersServices()
