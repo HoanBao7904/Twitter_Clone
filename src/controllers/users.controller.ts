@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express'
+import { Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { ObjectId } from 'mongodb'
 import { envConfig } from '~/constants/config'
@@ -253,5 +253,14 @@ export const fololowerController = async (req: Request, res: Response) => {
   return res.json({
     message: 'Lấy danh sách follower thành công',
     result
+  })
+}
+
+export const addFriendController = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const { followed_user_id } = req.body
+  const result = await usersServices.addUserInCircle(user_id, followed_user_id)
+  return res.json({
+    message: result
   })
 }

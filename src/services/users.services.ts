@@ -587,6 +587,33 @@ class UsersServices {
       ])
       .toArray()
   }
+
+  async checkUserInCircle(user_id: string, followed_user_id: string) {
+    const count = await databaseService.follower.countDocuments({
+      $or: [
+        { user_id: new ObjectId(user_id), followed_user_id: new ObjectId(followed_user_id) },
+        { user_id: new ObjectId(followed_user_id), followed_user_id: new ObjectId(user_id) }
+      ]
+    })
+    return count === 2
+  }
+  async addUserInCircle(user_id: string, followed_user_id: string) {
+    const isMutual = await this.checkUserInCircle(user_id, followed_user_id)
+
+    if (!isMutual) {
+      throw new ErrorWithStatus({
+        message: 'Chỉ có thể thêm bạn thân khi cả 2 đã follow nhau',
+        status: 400
+      })
+    }
+
+    await databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      { $addToSet: { twitter_circle: new ObjectId(followed_user_id) } }
+    )
+
+    return 'Thêm vào bạn thân thành công'
+  }
 }
 
 const usersServices = new UsersServices()

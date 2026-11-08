@@ -18,7 +18,8 @@ import {
   oauthController,
   randomListsController,
   followingController,
-  fololowerController
+  fololowerController,
+  addFriendController
 } from '~/controllers/users.controller'
 import { filterMiddleware } from '~/middlewares/common.middleware'
 import {
@@ -254,6 +255,16 @@ useRoutes.get('/listFollowing', accessTokenValidator, verifyUserValidator, wrapR
  */
 
 useRoutes.get('/listFollower', accessTokenValidator, verifyUserValidator, wrapRequestHandler(fololowerController))
+
+/**
+ * Description: thêm bạn thân
+ * path: /addFriend
+ * method: POST
+ * header:{Authorization: Bearer <access_token>}
+ * body : {followed_user_id}
+ */
+
+useRoutes.post('/addFriend', accessTokenValidator, verifyUserValidator, wrapRequestHandler(addFriendController))
 
 /**
  * Description: change Password
