@@ -25,3 +25,13 @@ export const searchValidator = validate(
     }
   })
 )
+
+export const searchHastagsValidator = validate(
+  checkSchema({
+    q: {
+      isString: {
+        errorMessage: 'content phai la string'
+      }
+    }
+  })
+)

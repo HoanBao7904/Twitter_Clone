@@ -39,16 +39,9 @@ export const oauthController = async (req: Request, res: Response) => {
   // console.log(req.url)
   const { code } = req.query
   const result = await usersServices.oauth(code as string)
-  console.log(code)
   const urlRedirect = `${envConfig.clientRedirectCallback}?access_token=${result.access_token}&refresh_token=${result.refresh_token}&new_user=${result.newUser}&verify=${result.verify}`
-  return res.redirect(urlRedirect)
-  // res.json({
-  //   message: result.newUser ? 'Register success' : 'login success',
-  //   result: {
-  //     access_token: result.access_token,
-  //     refreshtoken: result.refresh_token
-  //   }
-  // })
+  return res.redirect(urlRedirect) //dùng để chuyển hướng từ URL hiện tại sang URL khác
+  // return res.redirect(envConfig.clientRedirectCallback)
 }
 
 export const registerController = async (
@@ -160,10 +153,12 @@ export const resetPasswordController = async (
 
 export const getMeController = async (req: Request, res: Response) => {
   const { user_id } = req.decoded_authorization as Tokenpayload
-  const result = await usersServices.getMe(user_id)
+  const { follower, following, user } = await usersServices.getMe(user_id)
   return res.json({
     message: 'user get profile success',
-    result: result
+    result: user,
+    totalFollower: follower,
+    totalFollowing: following
   })
 }
 
@@ -214,6 +209,16 @@ export const unFollowController = async (req: Request<UnFollowReqParams>, res: R
   return res.json(result)
 }
 
+export const removeFollowerController = async (req: Request, res: Response) => {
+  const { user_id: followed_user_id } = req.decoded_authorization as Tokenpayload
+  const { followed_user_id: user_id } = req.body
+
+  const { message } = await usersServices.removeFollower({ followed_user_id, user_id })
+  return res.json({
+    message: message
+  })
+}
+
 export const changePasswordController = async (
   req: Request<ParamsDictionary, any, changePasswordReqBody>,
   res: Response
@@ -239,20 +244,33 @@ export const randomListsController = async (req: Request, res: Response) => {
 }
 
 export const followingController = async (req: Request, res: Response) => {
+  const limit = Number(req.query.limit)
+  const page = Number(req.query.page)
+
   const { user_id } = req.decoded_authorization as Tokenpayload
-  const result = await usersServices.followingService(user_id)
+  const { followings, total } = await usersServices.followingService({ user_id, page, limit })
   return res.json({
     message: 'Lấy danh sách following thành công',
-    result
+    result: followings,
+    page: page,
+    limit: limit,
+    total: total,
+    total_page: Math.ceil(total / limit)
   })
 }
 
 export const fololowerController = async (req: Request, res: Response) => {
   const { user_id } = req.decoded_authorization as Tokenpayload
-  const result = await usersServices.followerService(user_id)
+  const limit = Number(req.query.limit)
+  const page = Number(req.query.page)
+  const { result, total } = await usersServices.followerService({ user_id, page, limit })
   return res.json({
     message: 'Lấy danh sách follower thành công',
-    result
+    result,
+    page: page,
+    limit: limit,
+    total: total,
+    total_page: Math.ceil(total / limit)
   })
 }
 
@@ -271,5 +289,15 @@ export const UnFriendController = async (req: Request, res: Response) => {
   const result = await usersServices.unUserInCircle(user_id, followed_user_id)
   return res.json({
     message: result
+  })
+}
+
+export const SearchController = async (req: Request, res: Response) => {
+  const { user_id } = req.decoded_authorization as Tokenpayload
+  const { q } = req.query
+  const result = await usersServices.searchUser(q as string, user_id)
+  return res.json({
+    message: 'search success',
+    result
   })
 }

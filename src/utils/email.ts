@@ -96,7 +96,7 @@ export const sendForgotPasswordEmail = (
       .replace('{{title}}', 'Reset Your Password')
       .replace('{{content}}', 'Click the button below to reset your password. This link will expire soon.')
       .replace('{{titleLink}}', 'Reset Password')
-      .replace('{{link}}', `${envConfig.clientUrl}/forgot-password?token=${forgot_password_token}`)
+      .replace('{{link}}', `${envConfig.clientUrl}/reset-password?token=${forgot_password_token}`)
     //cai route nay thong nhat giua client va SERVER
   })
 }

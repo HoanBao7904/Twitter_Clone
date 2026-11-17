@@ -20,7 +20,9 @@ import {
   followingController,
   fololowerController,
   addFriendController,
-  UnFriendController
+  UnFriendController,
+  SearchController,
+  removeFollowerController
 } from '~/controllers/users.controller'
 import { filterMiddleware } from '~/middlewares/common.middleware'
 import {
@@ -58,55 +60,6 @@ const useRoutes = Router()
 //   }
 // )
 
-/**
- * @openapi
- * /users/login:
- *   post:
- *     tags:
- *       - users
- *     summary: Đăng nhập
- *     description: Đăng nhập vào hệ thống để lấy Access Token và Refresh Token
- *     operationId: login
- *     requestBody:
- *       description: Thông tin đăng nhập
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/loginBody'
- *     responses:
- *       '200':
- *         description: Đăng nhập thành công
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: login success
- *                 result:
- *                   $ref: '#/components/schemas/successAuthentication'
- *       '422':
- *         description: Thông tin đăng nhập không hợp lệ
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: login failed
- *                 result:
- *                   type: object
- *                   properties:
- *                     email:
- *                       type: string
- *                       example: email is required
- *                     password:
- *                       type: string
- *                       example: password is required
- */
 useRoutes.post('/login', loginValidator, wrapRequestHandler(loginController))
 /**
  * Description: Login with google
@@ -201,6 +154,15 @@ useRoutes.get('/me', accessTokenValidator, wrapRequestHandler(getMeController))
  */
 
 useRoutes.get('/connect/users', accessTokenValidator, verifyUserValidator, wrapRequestHandler(randomListsController))
+
+/**
+ * Description: Search name of username
+ * path: /search
+ * method: GET
+ * header :{Authorization: Bearer <access_token>}
+ */
+
+useRoutes.get('/search', accessTokenValidator, verifyUserValidator, wrapRequestHandler(SearchController))
 
 /**
  * Description: update me profile
@@ -308,6 +270,16 @@ useRoutes.delete(
   unFollowValidator,
   wrapRequestHandler(unFollowController)
 )
+
+/**
+ * Description: un-follow user(xóa người đã theo dõi mình)
+ * path: /follower
+ * method: delete
+ * header:{Authorization: Bearer <access_token>}
+ * body: {follwer_user_id: strig,user_id:string}
+ */
+
+useRoutes.delete('/follower', accessTokenValidator, verifyUserValidator, wrapRequestHandler(removeFollowerController))
 
 /**
  * Description: get user profile

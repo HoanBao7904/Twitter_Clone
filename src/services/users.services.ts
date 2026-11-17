@@ -13,6 +13,8 @@ import Follower from '~/models/schemas/Follower.schema'
 import axios from 'axios'
 import { sendForgotPasswordEmail, sendRegisterVerifyEmail } from '~/utils/email'
 import { envConfig } from '~/constants/config'
+import { match } from 'assert'
+import { $ } from '@faker-js/faker/dist/core-BMOHu6e5'
 
 dotenv.config()
 class UsersServices {
@@ -232,17 +234,6 @@ class UsersServices {
       })
       return { ...data, newUser: true, verify: UserVerifyStatus.Unverified }
     }
-    // console.log(userinfo)
-    /**
-     * {
-     *   access_token:,
-     *   expires_in:,
-     *   refresh_token
-     *   scope:,
-     *   token_type:,
-     *   id_token:,
-     * }
-     */
   }
 
   async CheckEmail(value: string) {
@@ -386,17 +377,74 @@ class UsersServices {
   }
 
   async getMe(user_id: string) {
-    const user = await databaseService.users.findOne(
-      { _id: new ObjectId(user_id) },
-      {
-        projection: {
-          forgot_password_token: 0,
-          email_verify_token: 0,
-          password: 0
+    const [following, follower, user] = await Promise.all([
+      databaseService.follower
+        .aggregate([
+          {
+            $match: {
+              user_id: new ObjectId(user_id)
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'followed_user_id',
+              foreignField: '_id',
+              as: 'following'
+            }
+          },
+          {
+            $unwind: {
+              path: '$following'
+            }
+          },
+          {
+            $count: 'total'
+          }
+        ])
+        .toArray(),
+      databaseService.follower
+        .aggregate([
+          {
+            $match: {
+              followed_user_id: new ObjectId(user_id)
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'followed_user_id',
+              foreignField: '_id',
+              as: 'follower'
+            }
+          },
+          {
+            $unwind: {
+              path: '$follower'
+            }
+          },
+          {
+            $count: 'total'
+          }
+        ])
+        .toArray(),
+      databaseService.users.findOne(
+        { _id: new ObjectId(user_id) },
+        {
+          projection: {
+            forgot_password_token: 0,
+            email_verify_token: 0,
+            password: 0
+          }
         }
-      }
-    )
-    return user
+      )
+    ])
+
+    return {
+      follower: follower[0]?.total,
+      following: following[0]?.total,
+      user
+    }
   }
   async updateMe(user_id: string, payload: UpdateReqBody) {
     const _payload = payload.date_of_birth ? { ...payload, date_of_birth: new Date(payload.date_of_birth) } : payload
@@ -468,29 +516,37 @@ class UsersServices {
     }
   }
 
-  async unFollower(user_id: string, follower_user_id: string) {
-    const follower = await databaseService.follower.findOne({
+  async unFollower(user_id: string, followed_user_id: string) {
+    const { deletedCount } = await databaseService.follower.deleteOne({
       user_id: new ObjectId(user_id),
-      followed_user_id: new ObjectId(follower_user_id)
-    })
-
-    //nghĩa là nó chưa follwer user này
-    if (follower === null) {
-      return {
-        message: 'đã un-follwer'
-      }
-    }
-    await databaseService.follower.deleteOne({
-      user_id: new ObjectId(user_id),
-      followed_user_id: new ObjectId(follower_user_id)
+      followed_user_id: new ObjectId(followed_user_id)
     })
 
     return {
-      message: 'un-follower success'
+      message: deletedCount > 0 ? 'Bỏ theo dõi thành công' : 'Bạn chưa theo dõi người này'
     }
   }
+
+  async removeFollower({ user_id, followed_user_id }: { user_id: string; followed_user_id: string }) {
+    const result = await databaseService.follower.findOneAndDelete({
+      user_id: new ObjectId(user_id),
+      followed_user_id: new ObjectId(followed_user_id)
+    })
+    // result.
+    let message
+    if (result.value) {
+      message = 'Follower removed successfully'
+    } else {
+      message = 'Follower not found'
+    }
+
+    return {
+      message: message
+    }
+  }
+
   async ChangePassword(user_id: string, password: string) {
-    const changePass = await databaseService.users.updateOne(
+    await databaseService.users.updateOne(
       { _id: new ObjectId(user_id) },
       {
         $set: {
@@ -516,76 +572,148 @@ class UsersServices {
     return randomUsers
   }
 
-  async followingService(user_id: string) {
-    return databaseService.follower
-      .aggregate([
-        {
-          $match: {
-            user_id: new ObjectId(user_id)
+  async followingService({ user_id, limit, page }: { user_id: string; page: number; limit: number }) {
+    const [followings, total] = await Promise.all([
+      databaseService.follower
+        .aggregate([
+          {
+            $match: {
+              user_id: new ObjectId(user_id)
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'followed_user_id',
+              foreignField: '_id',
+              as: 'following'
+            }
+          },
+          {
+            $unwind: {
+              path: '$following'
+            }
+          },
+          {
+            $skip: limit * (page - 1)
+          },
+          {
+            $limit: limit
+          },
+          {
+            $project: {
+              following: {
+                _id: '$following._id',
+                name: '$following.name',
+                username: '$following.username',
+                bio: '$following.bio',
+                avatar: '$following.avatar',
+                is_following: { $literal: true }
+              },
+              _id: 0
+            }
           }
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'followed_user_id',
-            foreignField: '_id',
-            as: 'following'
-          }
-        },
-        {
-          $unwind: {
-            path: '$following'
-          }
-        },
-        {
-          $project: {
-            following: {
-              name: '$following.name',
-              username: '$following.username',
-              bio: '$following.bio',
-              avatar: '$following.avatar'
-            },
-            _id: 0
-          }
-        }
-      ])
-      .toArray()
+        ])
+        .toArray(),
+      databaseService.follower
+        .aggregate([
+          {
+            $match: {
+              user_id: new ObjectId(user_id)
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'followed_user_id',
+              foreignField: '_id',
+              as: 'following'
+            }
+          },
+          {
+            $unwind: {
+              path: '$following'
+            }
+          },
+          { $count: 'total' }
+        ])
+        .toArray()
+    ])
+    return {
+      followings,
+      total: total[0]?.total || 0
+    }
   }
 
-  async followerService(user_id: string) {
-    return databaseService.follower
-      .aggregate([
-        {
-          $match: {
-            followed_user_id: new ObjectId(user_id)
+  async followerService({ user_id, limit, page }: { user_id: string; page: number; limit: number }) {
+    const [result, total] = await Promise.all([
+      databaseService.follower
+        .aggregate([
+          {
+            $match: {
+              followed_user_id: new ObjectId(user_id)
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'user_id',
+              foreignField: '_id',
+              as: 'follower'
+            }
+          },
+          {
+            $unwind: {
+              path: '$follower'
+            }
+          },
+          { $skip: limit * (page - 1) },
+          { $limit: limit },
+          {
+            $project: {
+              following: {
+                _id: '$follower._id',
+                name: '$follower.name',
+                username: '$follower.username',
+                bio: '$follower.bio',
+                avatar: '$follower.avatar',
+                is_following: { $literal: true }
+              },
+              _id: 0
+            }
           }
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'followed_user_id',
-            foreignField: '_id',
-            as: 'following'
+        ])
+        .toArray(),
+      databaseService.follower
+        .aggregate([
+          {
+            $match: {
+              followed_user_id: new ObjectId(user_id)
+            }
+          },
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'user_id',
+              foreignField: '_id',
+              as: 'follower'
+            }
+          },
+          {
+            $unwind: {
+              path: '$follower'
+            }
+          },
+          {
+            $count: 'total'
           }
-        },
-        {
-          $unwind: {
-            path: '$following'
-          }
-        },
-        {
-          $project: {
-            following: {
-              name: '$following.name',
-              username: '$following.username',
-              bio: '$following.bio',
-              avatar: '$following.avatar'
-            },
-            _id: 0
-          }
-        }
-      ])
-      .toArray()
+        ])
+        .toArray()
+    ])
+    return {
+      total: total[0]?.total || 0,
+      result
+    }
   }
 
   async checkUserInCircle(user_id: string, followed_user_id: string) {
@@ -635,6 +763,56 @@ class UsersServices {
       { $pull: { twitter_circle: new ObjectId(followed_user_id) } }
     )
     return 'Xóa khỏi bạn thân thành công'
+  }
+  async searchUser(q: string, user_id: string) {
+    const user_id_owner = new ObjectId(user_id)
+
+    // 1. Lấy danh sách ID những người mình đang follow
+    const followed_users = await databaseService.follower
+      .find({ user_id: user_id_owner }, { projection: { followed_user_id: 1, _id: 0 } })
+      .toArray()
+
+    const followedIds = followed_users.map((item) => item.followed_user_id)
+
+    // 2. Query tìm kiếm
+    const searchResult = await databaseService.users
+      .aggregate([
+        {
+          $match: {
+            $or: [{ name: { $regex: q, $options: 'i' } }, { username: { $regex: q, $options: 'i' } }]
+          }
+        },
+        // 3. THÊM ĐIỂM ƯU TIÊN
+        {
+          $addFields: {
+            // tìm ra những người theo từ khóa so sánh với danh sách theo dõi
+            is_followed: { $in: ['$_id', followedIds] }
+          }
+        },
+
+        {
+          $sort: {
+            is_followed: -1, // -1 là giảm dần (1 lên trước, 0 ra sau)
+            username: 1, // Nếu cùng điểm ưu tiên thì xếp theo username A-Z
+            name: 1 // Nếu cùng điểm ưu tiên thì xếp theo tên A-Z
+          }
+        },
+
+        { $limit: 10 },
+
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            username: 1,
+            avatar: 1,
+            is_followed: 1
+          }
+        }
+      ])
+      .toArray()
+
+    return searchResult
   }
 }
 

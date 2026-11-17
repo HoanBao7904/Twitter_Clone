@@ -69,8 +69,6 @@ export const handleUploadImage = async (req: Request) => {
       const validByExt = validImageExtensions.includes(ext)
       const valid = name === 'image' && (validByMime || validByExt)
 
-      console.log('DEBUG filter:', { name, originalFilename, mimetype, ext, valid })
-
       // if (!valid && !isErrorEmitted) {
       //   isErrorEmitted = true
       //   form.emit('error', new Error('File type is not valid'))
@@ -147,50 +145,78 @@ export const handleUploadImage = async (req: Request) => {
 //   })
 // }
 
+// export const handleUploadVideo = async (req: Request) => {
+//   let isErrorEmitted = false
+//   const validVideoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm']
+
+//   const form = formidable({
+//     uploadDir: UPLOAD_VIDEO_DIR,
+//     maxFiles: 1,
+//     maxFileSize: 500 * 1024 * 1024,
+//     filter: ({ name, originalFilename, mimetype }) => {
+//       const ext = path.extname(originalFilename || '').toLowerCase()
+//       const validByMime = Boolean(mimetype?.includes('video/') || mimetype?.includes('quicktime'))
+//       const validByExt = validVideoExtensions.includes(ext)
+//       const valid = name === 'video' && (validByMime || validByExt)
+
+//       if (!valid && !isErrorEmitted) {
+//         isErrorEmitted = true
+//         form.emit('error', new Error('File type is not valid'))
+//       }
+//       return valid
+//     }
+//   })
+
+//   return new Promise<File[]>((resolve, reject) => {
+//     form.parse(req, (err, fields, files) => {
+//       if (err) {
+//         return reject(err) // thêm return
+//       }
+//       if (!files.video) {
+//         return reject(new Error('file is empty'))
+//       }
+//       const videos = files.video as File[]
+
+//       videos.forEach((video) => {
+//         const ext = getExtension(video.originalFilename as string)
+//         const newFilePath = video.filepath + '.' + ext
+//         fs.renameSync(video.filepath, newFilePath)
+//         video.filepath = newFilePath
+//         video.newFilename = video.newFilename + '.' + ext
+//       })
+
+//       resolve(files.video as File[])
+//     })
+//   })
+// }
+
 export const handleUploadVideo = async (req: Request) => {
-  let isErrorEmitted = false
   const validVideoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm']
 
   const form = formidable({
     uploadDir: UPLOAD_VIDEO_DIR,
     maxFiles: 1,
     maxFileSize: 500 * 1024 * 1024,
+    keepExtensions: true, // 👈 Bật cái này lên
     filter: ({ name, originalFilename, mimetype }) => {
       const ext = path.extname(originalFilename || '').toLowerCase()
       const validByMime = Boolean(mimetype?.includes('video/') || mimetype?.includes('quicktime'))
       const validByExt = validVideoExtensions.includes(ext)
-      const valid = name === 'video' && (validByMime || validByExt)
-
-      if (!valid && !isErrorEmitted) {
-        isErrorEmitted = true
-        form.emit('error', new Error('File type is not valid'))
-      }
-      return valid
+      return name === 'video' && (validByMime || validByExt)
     }
   })
 
   return new Promise<File[]>((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
-      if (err) {
-        return reject(err) // thêm return
-      }
-      if (!files.video) {
-        return reject(new Error('file is empty'))
-      }
-      const videos = files.video as File[]
+      if (err) return reject(err)
+      if (!files.video) return reject(new Error('file is empty'))
 
-      videos.forEach((video) => {
-        const ext = getExtension(video.originalFilename as string)
-        const newFilePath = video.filepath + '.' + ext
-        fs.renameSync(video.filepath, newFilePath)
-        video.filepath = newFilePath
-        video.newFilename = video.newFilename + '.' + ext
-      })
-
+      // Không cần forEach để rename nữa vì keepExtensions đã tự làm
       resolve(files.video as File[])
     })
   })
 }
+
 export const getNameFromFullName = (fullname: string) => {
   const namearr = fullname.split('.')
   namearr.pop()

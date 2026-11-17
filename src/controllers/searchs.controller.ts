@@ -23,3 +23,12 @@ export const searchController = async (req: Request<any, any, any, searchquery>,
     total_page: Math.ceil(total / limit)
   })
 }
+
+export const searchHashtagsController = async (req: Request, res: Response) => {
+  const { q } = req.query
+  const result = await searchService.searchHashtags(q as string)
+  return res.json({
+    message: 'search hashtags SuccessFully',
+    result
+  })
+}
